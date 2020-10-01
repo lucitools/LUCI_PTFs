@@ -190,7 +190,7 @@ class SoilParam(object):
         # 11 MVG_of_choice
         param = arcpy.Parameter()
         param.name = u'MVG_of_choice'
-        param.displayName = u'Estimate Mualemvan Genuchten model parameters'
+        param.displayName = u'Estimate Mualem van Genuchten model parameters'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'

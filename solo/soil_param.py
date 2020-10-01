@@ -8,13 +8,14 @@ import configuration
 import numpy as np
 import arcpy
 import math
-import LUCI_PTF.lib.log as log
-import LUCI_PTF.lib.progress as progress
-import LUCI_PTF.lib.common as common
-from LUCI_PTF.lib.external import six # Python 2/3 compatibility module
+import LUCI_PTFs.lib.log as log
+import LUCI_PTFs.lib.progress as progress
+import LUCI_PTFs.lib.common as common
+import LUCI_PTFs.lib.vanGenuchten as vanGenuchten
+from LUCI_PTFs.lib.external import six # Python 2/3 compatibility module
 
-from LUCI_PTF.lib.refresh_modules import refresh_modules
-refresh_modules([log, common])
+from LUCI_PTFs.lib.refresh_modules import refresh_modules
+refresh_modules([log, common, vanGenuchten])
 
 def checkInputFields(inputFields, inputShp):
 
@@ -54,160 +55,7 @@ def checkCarbon(carbon, carbContent, record):
 
     return warningFlag
 
-def calcVG(WC_residual, WC_sat, alpha_VG, n_VG, m_VG):
-    # Calculates soil water content using the van Genuchten equation
-
-    WC_1kPaArray = []
-    WC_3kPaArray = []
-    WC_10kPaArray = []
-    WC_33kPaArray = []
-    WC_100kPaArray = []
-    WC_200kPaArray = []
-    WC_1000kPaArray = []
-    WC_1500kPaArray = []
-
-    for x in range(0, len(WC_residual)):
-        WC_1kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 10.0) ** n_VG[x]))) ** m_VG[x])
-        WC_3kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 30.0) ** n_VG[x]))) ** m_VG[x])
-        WC_10kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 100.0) ** n_VG[x]))) ** m_VG[x])
-        WC_33kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 330.0) ** n_VG[x]))) ** m_VG[x])
-        WC_100kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 1000.0) ** n_VG[x]))) ** m_VG[x])
-        WC_200kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 2000.0) ** n_VG[x]))) ** m_VG[x])
-        WC_1000kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 10000.0) ** n_VG[x]))) ** m_VG[x])
-        WC_1500kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 15000.0) ** n_VG[x]))) ** m_VG[x])
-
-        WC_1kPaArray.append(WC_1kPa)
-        WC_3kPaArray.append(WC_3kPa)
-        WC_10kPaArray.append(WC_10kPa)
-        WC_33kPaArray.append(WC_33kPa)
-        WC_100kPaArray.append(WC_100kPa)
-        WC_200kPaArray.append(WC_200kPa)
-        WC_1000kPaArray.append(WC_1000kPa)
-        WC_1500kPaArray.append(WC_1500kPa)
-
-    return WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray
-
-def writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray):
-    # Write outputs of VG equations to output shapefile
-
-    # Add fields
-    arcpy.AddField_management(outputShp, "WC_1kPa", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "WC_3kPa", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "WC_100kPa", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "WC_200kPa", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "WC_1000kPa", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
-
-    outputFields = ["WC_1kPa", "WC_3kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_200kPa", "WC_1000kPa", "WC_1500kpa"]
-
-    recordNum = 0
-    with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
-        for row in cursor:
-            row[0] = WC_1kPaArray[recordNum]
-            row[1] = WC_3kPaArray[recordNum]
-            row[2] = WC_10kPaArray[recordNum]
-            row[3] = WC_33kPaArray[recordNum]
-            row[4] = WC_100kPaArray[recordNum]
-            row[5] = WC_200kPaArray[recordNum]
-            row[6] = WC_1000kPaArray[recordNum]
-            row[7] = WC_1500kPaArray[recordNum]
-
-            cursor.updateRow(row)
-            recordNum += 1
-
-def writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray):
-    # Write VG parameters to the shapefile
-
-    # Add fields
-    arcpy.AddField_management(outputShp, "WC_res", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "WC_sat", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "alpha_VG", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "n_VG", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "m_VG", "DOUBLE", 10, 6)
-
-    outputFields = ["WC_res", "WC_sat", "alpha_VG", "n_VG", "m_VG"]
-
-    recordNum = 0
-    with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
-        for row in cursor:
-            row[0] = WC_residualArray[recordNum]
-            row[1] = WC_satArray[recordNum]
-            row[2] = alpha_VGArray[recordNum]
-            row[3] = n_VGArray[recordNum]
-            row[4] = m_VGArray[recordNum]
-
-            cursor.updateRow(row)
-            recordNum += 1
-
-def plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray):
-    # Create Van Genuchten plots
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    # Plot 1: pressure on the y-axis, water content on the x-axis
-    outPath = os.path.join(outputFolder, 'plotVG.png')
-    title = 'Van Genuchten plots of ' + str(len(record)) + ' records'
-
-    y = np.linspace(1.0, 100000.0, 100000)
-    labels = []
-    for i in range(0, len(record)):
-        x = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * y * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
-        plt.plot(x, y)
-
-    plt.axhline(y=33.0)
-    plt.axhline(y=0.0)
-    plt.axhline(y=1500.0)
-    plt.yscale('log')
-    plt.title(title)
-    plt.xlabel('Water content')
-    plt.ylabel('kPa')
-    plt.savefig(outPath, transparent=False)
-    plt.close()
-    log.info('Plot created')
-
-    # Plot 2: pressure on the x-axis, WC on the y-axis
-    outPath = os.path.join(outputFolder, 'plotVG_WC_yaxis.png')
-    title = 'Van Genuchten plots of ' + str(len(record)) + ' records (water content on y-axis)'
-
-    x = np.linspace(1.0, 2000.0, 10000)
-    labels = []
-    for i in range(0, len(record)):
-        y = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * x * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
-        plt.plot(x, y)
-
-    plt.axvline(x=33.0)
-    plt.axvline(x=0.0)
-    plt.axvline(x=1500.0)
-    plt.xscale('log')
-    plt.title(title)
-    plt.ylabel('Water content')
-    plt.xlabel('kPa')
-    plt.savefig(outPath, transparent=False)
-    plt.close()
-    log.info('Plot created with water content on the y-axis')
-
-    # Plot 3: WC on the y-axis zoomed in to 1 to 600 kPa
-    outPath = os.path.join(outputFolder, 'plotVG_200kPa.png')
-    title = 'Van Genuchten plots of ' + str(len(record)) + ' records (water content on y-axis)'
-
-    x = np.linspace(1.0, 300.0, 600)
-    labels = []
-    for i in range(0, len(record)):
-        y = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * x * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
-        plt.plot(x, y)
-
-    plt.axvline(x=33.0)
-    plt.axvline(x=0.0)
-    plt.title(title)
-    plt.ylabel('Water content')
-    plt.xlabel('kPa')
-    plt.savefig(outPath, transparent=False)
-    plt.close()
-    log.info('Plot created with lines for important thresholds')
-
-def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, KsatChoice, KsatOption, carbContent, carbonConFactor, rerun=False):
+def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, KsatChoice, KsatOption, MVGChoice, MVGOption, carbContent, carbonConFactor, rerun=False):
 
     try:
         # Set temporary variables
@@ -1891,44 +1739,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                     m_VGArray.append(m_VG)
 
                     # Calculate water content at VG pressures
-                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                     K_sat = (10.0 / 24.0) * math.exp(7.755 + (0.0352 * siltPerc[x]) + (0.93 * 1) - (0.976 * BDg_cm3[x]**2) - (0.000484 * clayPerc[x]**2) - (0.000322 * siltPerc[x]**2) + (0.001 * siltPerc[x]**(-1)) - (0.0748 * (carbPerc[x]*float(carbonConFactor))**(-1)) - (0.643 * math.log(siltPerc[x])) - (0.0139 * BDg_cm3[x] * clayPerc[x]) - (0.167 * BDg_cm3[x] * carbPerc[x]*float(carbonConFactor)) + (0.0298 * 1 * clayPerc[x]) - (0.03305 * 1 * siltPerc[x]))
                     K_satArray.append(K_sat)
 
-                    '''
-                    # Creating individual plots
-                    import matplotlib.pyplot as plt
-                    import numpy as np
-
-                    yPlot = np.linspace(1.0, 1000000.0, 1000000)
-                    xPlot = np.array(WC_residual + ((WC_sat - WC_residual) / ((1.0 + ((alpha_VG * yPlot * 10.0) ** n_VG))) ** m_VG))
-                    
-                    titlePlot = 'VG curve for record: ' + str(x)
-                    outName = 'plot_' + str(x) + '.png'
-                    outPath = os.path.join(outputFolder, outName)
-
-                    plt.plot(xPlot, yPlot, label='VG Curve')
-                    plt.yscale('log')
-                    plt.title(titlePlot)
-                    plt.ylabel('kPa')
-                    plt.xlabel('Water content')
-                    plt.legend(titlePlot)
-                    plt.savefig(outPath)
-                    plt.close()
-
-                    log.info('Plot made')
-                    log.info('Path: ' + str(outPath))
-                    '''
-
                 # Create plots
-                plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write VG parameter results to output shapefile
-                writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write water content results back to the shapefile
-                writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)                
+                vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)                
 
                 # Write Ksat results to output shapefile
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
@@ -2001,16 +1824,16 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                     m_VGArray.append(m_VG)
 
                     # Calculate water content at VG pressures
-                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Create plots
-                plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write VG parameter results to output shapefile
-                writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write water content results back to the shapefile
-                writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
+                vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
 
                 log.info("Results written to the output shapefile inside the output folder")
 
@@ -2069,16 +1892,16 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                     m_VGArray.append(m_VG)
 
                     # Calculate water content at VG pressures
-                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Create plots
-                plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write VG parameter results to output shapefile
-                writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write water content results back to the shapefile
-                writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
+                vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
 
                 log.info("Results written to the output shapefile inside the output folder")
 
@@ -2138,16 +1961,16 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                     m_VGArray.append(m_VG)
 
                     # Calculate water content at VG pressures
-                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Create plots
-                plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write VG parameter results to output shapefile
-                writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write water content results back to the shapefile
-                writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
+                vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
 
                 log.info("Results written to the output shapefile inside the output folder")
 
@@ -2198,16 +2021,16 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                     m_VGArray.append(m_VG)
 
                     # Calculate water content at VG pressures
-                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Create plots
-                plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write VG parameter results to output shapefile
-                writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write water content results back to the shapefile
-                writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
+                vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
 
                 log.info("Results written to the output shapefile inside the output folder")
 
@@ -2276,16 +2099,16 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                     m_VGArray.append(m_VG)
 
                     # Calculate water content at VG pressures
-                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                    WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Create plots
-                plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write VG parameter results to output shapefile
-                writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write water content results back to the shapefile
-                writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
+                vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
 
                 log.info("Results written to the output shapefile inside the output folder")
 
@@ -2533,6 +2356,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
 
                 if carbContent == 'OC':
                     reqFields = ["OBJECTID", "Sand", "Clay", "OC", "BD"]
+                    carbonConFactor = 1.724
 
                 elif carbContent == 'OM':
                     reqFields = ["OBJECTID", "Sand", "Clay", "OM", "BD"]
@@ -2692,7 +2516,6 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 clayPerc = []
                 WC_satArray = []
 
-
                 with arcpy.da.SearchCursor(outputShp, reqFields) as searchCursor:
                     for row in searchCursor:
                         objectID = row[0]
@@ -2732,6 +2555,164 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 log.error('Ksat option not recognised')
                 log.error('Please choose a Ksat option from the drop down menu')
                 sys.exit()
+
+        if MVGChoice == True:
+
+            if MVGOption == 'Wosten_1999':
+                log.info("Calculating Mualem-Van Genuchten parameters using Wosten et al. (1999)")
+
+                # Requirements: silt, clay, OM, and BD
+                if carbContent == 'OC':
+                    reqFields = ["OBJECTID", "Silt", "Clay", "OC", "BD"]
+                    carbonConFactor = 1.724
+
+                elif carbContent == 'OM':
+                    reqFields = ["OBJECTID", "Silt", "Clay", "OM", "BD"]
+                    carbonConFactor = 1.0
+
+                checkInputFields(reqFields, inputShp)
+
+                # Retrieve info from input
+                record = []
+                siltPerc = []
+                clayPerc = []
+                carbPerc = []
+                BDg_cm3 = []
+
+                with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
+                    for row in searchCursor:
+                        objectID = row[0]
+                        silt = row[1]
+                        clay = row[2]
+                        carbon = row[3]
+                        BD = row[4]
+
+                        record.append(objectID)
+                        siltPerc.append(silt)
+                        clayPerc.append(clay)
+                        carbPerc.append(carbon)
+                        BDg_cm3.append(BD)
+
+                K_satArray = []
+                WC_satArray = []
+                WC_residualArray = []
+                alpha_VGArray = []
+                n_VGArray = []
+                m_VGArray = []
+                l_MvG_normArray = []
+                l_MvGArray = []
+
+                for x in range(0, len(record)):
+
+                    # Calculate Mualem Van Genuchten parameters using Wosten et al. (1999) - Clay, Silt, OM, BD
+                    K_sat = 10.0 / 24.0 * math.exp(7.755 + (0.0352 * siltPerc[x]) + 0.93 - (0.976 * BDg_cm3[x]**2) - (0.000484 * clayPerc[x]**2) - (0.000322 * siltPerc[x]**2) + (0.001 * siltPerc[x]**(-1)) - (0.0748 * (carbPerc[x]*float(carbonConFactor))**(-1)) - (0.643 * math.log(siltPerc[x])) - (0.0139 * BDg_cm3[x] * clayPerc[x]) - (0.167 * BDg_cm3[x] * carbPerc[x] * float(carbonConFactor)) + (0.0298 * clayPerc[x]) - (0.03305 * siltPerc[x]))
+
+                    # Mualem Van Genuchten parameters: 
+                    if clayPerc[x] < 18.0 and sandPerc[x] > 65.0:
+                        WC_residual = 0.025
+                    else:
+                        WC_residual = 0.01
+
+                    WC_sat = 0.7919 + (0.001691 * clayPerc[x]) - (0.29619 * BDg_cm3[x]) - (0.000001491 * siltPerc[x]**2) + (0.0000821 * ((carbPerc[x] * float(carbonConFactor)))**2) + (0.02427 * clayPerc[x] **(-1.0) + (0.01113 * siltPerc[x]**(-1.0)) +  (0.01472 * math.log(siltPerc[x])) - 0.0000733 * ((carbPerc[x] * float(carbonConFactor))) * clayPerc[x]) - (0.000619 * BDg_cm3[x] * clayPerc[x]) - (0.001183 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) - (0.0001664 * 1.0 * siltPerc[x])
+                    alpha_VG = math.exp(- 14.96 + (0.03135 * clayPerc[x]) + (0.0351 * siltPerc[x]) + (0.646 * (carbPerc[x] * float(carbonConFactor))) + (15.29 * BDg_cm3[x]) - (0.192 * 1.0) - (4.671 * BDg_cm3[x] ** 2.0) - (0.000781 * clayPerc[x]) - (0.00687 * (carbPerc[x] * float(carbonConFactor)) ** 2.0) + (0.0449 * ((carbPerc[x] * float(carbonConFactor)))**(-1.0)) + (0.0663 * math.log(siltPerc[x])) + (0.1482 * math.log((carbPerc[x] * float(carbonConFactor)))) - (0.04546 * BDg_cm3[x] * siltPerc[x]) - (0.4852 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00673 * 1.0 * clayPerc[x]))
+                    n_VG = math.exp(-25.23 - (0.02195 * clayPerc[x]) + (0.0074 * siltPerc[x]) - (0.1940 * (carbPerc[x] * float(carbonConFactor))) + (45.5 * BDg_cm3[x]) - (7.24 * BDg_cm3[x] ** 2.0) +  (0.0003658 * clayPerc[x] **2.0) + (0.002885 * ((carbPerc[x] * float(carbonConFactor)))**2.0) - (12.81 * (BDg_cm3[x])**(-1.0)) - (0.1524 * (siltPerc[x])**(-1.0)) - (0.01958 * ((carbPerc[x] * float(carbonConFactor)))** (-1.0)) - (0.2876 * math.log(siltPerc[x])) - (0.0709 * math.log((carbPerc[x] * float(carbonConFactor)))) - (44.6 * math.log(BDg_cm3[x])) - (0.02264 * BDg_cm3[x] * clayPerc[x]) + (0.0896 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00718 * 1.0 * clayPerc[x])) + 1
+                    m_VG = 1.0 - (1.0 / float(n_VG))
+
+                    l_MvG_norm = 0.0202 + (0.0006193 * clayPerc[x]**2) - (0.001136 * (carbPerc[x]*float(carbonConFactor))**2) - (0.2316 * math.log(carbPerc[x]*float(carbonConFactor))) - (0.03544 * BDg_cm3[x] * clayPerc[x]) + (0.00283 * BDg_cm3[x] * siltPerc[x]) + (0.0488 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor)))
+                    l_MvG =  10 * (math.exp(l_MvG_norm) - 1) / (math.exp(l_MvG_norm)+1)
+
+                    K_satArray.append(K_sat)
+                    WC_satArray.append(WC_sat)
+                    WC_residualArray.append(WC_residual)
+                    alpha_VGArray.append(alpha_VG)
+                    n_VGArray.append(n_VG)
+                    m_VGArray.append(m_VG)
+                    l_MvG_normArray.append(l_MvG_norm)
+                    l_MvGArray.append(l_MvG)
+
+                Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kPaArray, Se_100kPaArray, Se_1500kPaArray, K_Se_1kPaArray, K_Se_3kPaArray, K_Se_10kPaArray, K_Se_33kPaArray, K_Se_100kPaArray, K_Se_1500kPaArray = vanGenuchten.calcMVG(K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray)
+
+                # Write Se and K_Se results back to the shapefile
+                vanGenuchten.writeOutputMVG(outputShp, Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kPaArray, Se_100kPaArray, Se_1500kPaArray, K_Se_1kPaArray, K_Se_3kPaArray, K_Se_10kPaArray, K_Se_33kPaArray, K_Se_100kPaArray, K_Se_1500kPaArray)
+
+                ## TODO: put in plotting functions!                
+                    
+            elif MVGOption == 'Weynants_2009':
+
+                log.info("Calculating Mualem-Van Genuchten parameters using Weynants et al. (2009)")
+
+                # Calculate Mualem Van Genuchten parameters using Weynants et al. (2009) - Sand, Silt, Clay, OC, BD
+                if carbContent == 'OC':
+                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OC", "BD"]
+                    carbonConFactor = 1.0
+
+                elif carbContent == 'OM':
+                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OM", "BD"]
+                    carbonConFactor = 0.58
+
+                checkInputFields(reqFields, inputShp)
+
+                # Retrieve info from input
+                record = []
+                sandPerc = []
+                siltPerc = []
+                clayPerc = []
+                carbPerc = []
+                BDg_cm3 = []
+
+                with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
+                    for row in searchCursor:
+                        objectID = row[0]
+                        sand = row[1]
+                        silt = row[2]
+                        clay = row[3]
+                        carbon = row[4]
+                        BD = row[5]
+
+                        record.append(objectID)
+                        sandPerc.append(sand)
+                        siltPerc.append(silt)
+                        clayPerc.append(clay)
+                        carbPerc.append(carbon)
+                        BDg_cm3.append(BD)
+
+                K_satArray = []
+                WC_satArray = []
+                WC_residualArray = []
+                alpha_VGArray = []
+                n_VGArray = []
+                m_VGArray = []
+                l_MvGArray = []
+
+                for x in range(0, len(record)):
+                    K_sat = math.exp(1.9582 + (0.0308 * sandPerc[x]) - (0.6142 * BDg_cm3[x]) - (0.1566 * (carbPerc[x] * float(carbonConFactor)))) * (10.0 / 24.0)
+                    WC_residual = 0.0
+                    WC_sat = 0.6355 + (0.0013 * clayPerc[x]) - (0.1631 * BDg_cm3[x])                    
+                    alpha_VG = math.exp(- 4.3003 - (0.0097 * clayPerc[x]) + (0.0138 * sandPerc[x]) - (0.0992 * carbPerc[x] * float(carbonConFactor)))                    
+                    n_VG = math.exp(-1.0846 - (0.0236 * clayPerc[x]) - (0.0085 * sandPerc[x]) + (0.0001 * sandPerc[x]**2)) + 1
+                    m_VG = 1.0 - (1.0 / float(n_VG))
+                    l_MvG = - 1.8642 - (0.1317 * clayPerc[x]) + (0.0067 * sandPerc[x])
+
+                    K_satArray.append(K_sat)
+                    WC_satArray.append(WC_sat)
+                    WC_residualArray.append(WC_residual)
+                    alpha_VGArray.append(alpha_VG)
+                    n_VGArray.append(n_VG)
+                    m_VGArray.append(m_VG)
+                    l_MvGArray.append(l_MvG)
+
+                Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kPaArray, Se_100kPaArray, Se_1500kPaArray, K_Se_1kPaArray, K_Se_3kPaArray, K_Se_10kPaArray, K_Se_33kPaArray, K_Se_100kPaArray, K_Se_1500kPaArray = vanGenuchten.calcMVG(K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray)
+
+                # Write Se and K_Se results back to the shapefile
+                vanGenuchten.writeOutputMVG(outputShp, Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kPaArray, Se_100kPaArray, Se_1500kPaArray, K_Se_1kPaArray, K_Se_3kPaArray, K_Se_10kPaArray, K_Se_33kPaArray, K_Se_100kPaArray, K_Se_1500kPaArray)
+
+                ## TODO: put in plotting functions!
+
+            else:
+                log.error('Ksat option not recognised')
+                log.error('Please choose a Ksat option from the drop down menu')
+                sys.exit()
+
 
     except Exception:
         arcpy.AddError("Soil parameterisation function failed")

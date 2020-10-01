@@ -1,7 +1,7 @@
 import arcpy
 import configuration
 import os
-from LUCI_PTF.lib.refresh_modules import refresh_modules
+from LUCI_PTFs.lib.refresh_modules import refresh_modules
 
 class SoilParam(object):
 
@@ -27,7 +27,7 @@ class SoilParam(object):
             """Modify the messages created by internal validation for each tool parameter.
             This method is called after internal validation."""
 
-            import LUCI_PTF.lib.input_validation as input_validation
+            import LUCI_PTFs.lib.input_validation as input_validation
             refresh_modules(input_validation)
 
             # Populate converstion factor automatically when either OM or OC is chosen has been chosen
@@ -101,7 +101,7 @@ class SoilParam(object):
         # 4 Calculate_PTF
         param = arcpy.Parameter()
         param.name = u'Calculate_PTF'
-        param.displayName = u'Calculate soil moisture content using PTF?'
+        param.displayName = u'Estimate soil moisture content using point-PTFs'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'Boolean'
@@ -111,7 +111,7 @@ class SoilParam(object):
         # 5 PTF_of_choice
         param = arcpy.Parameter()
         param.name = u'PTF_of_choice'
-        param.displayName = u'PTF of choice'
+        param.displayName = u'PTFs of choice'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
@@ -131,7 +131,7 @@ class SoilParam(object):
         # 6 Calculate_VG
         param = arcpy.Parameter()
         param.name = u'Calculate_VG'
-        param.displayName = u'Calculate soil moisture content using van Genuchten model?'
+        param.displayName = u'Estimate soil moisture content and generate soil moisture retention curve using parametric-PTFs for van Genuchten model'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'Boolean'
@@ -141,7 +141,7 @@ class SoilParam(object):
         # 7 VG_of_choice
         param = arcpy.Parameter()
         param.name = u'VG_of_choice'
-        param.displayName = u'Estimate van Genuchten model parameters'
+        param.displayName = u'Parametric-PTFs of choice for van Genuchten model'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
@@ -154,7 +154,7 @@ class SoilParam(object):
         # 8 Calculate_Ksat
         param = arcpy.Parameter()
         param.name = u'Calculate_Ksat'
-        param.displayName = u'Calculate saturated hydraulic conductivity (Ksat)?'
+        param.displayName = u'Estimate saturated hydraulic conductivity (Ksat)'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'Boolean'
@@ -177,7 +177,28 @@ class SoilParam(object):
                              u'Brakensiek et al. (1984)']
         params.append(param)
 
-        # 10 Carbon_content
+        # 10 Calculate_MVG
+        param = arcpy.Parameter()
+        param.name = u'Calculate_MVG'
+        param.displayName = u'Estimate unsaturated hydraulic conductivity and generate hydraulic conductivity curve using parametric-PTFs for Mualem van Genuchten model'
+        param.parameterType = 'Required'
+        param.direction = 'Input'
+        param.datatype = u'Boolean'
+        param.value = u'False'
+        params.append(param)
+
+        # 11 MVG_of_choice
+        param = arcpy.Parameter()
+        param.name = u'MVG_of_choice'
+        param.displayName = u'Estimate Mualemvan Genuchten model parameters'
+        param.parameterType = 'Required'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'Wosten et al. (1999)'
+        param.filter.list = [u'Wosten et al. (1999)', u'Weynants et al. (2009)']
+        params.append(param)
+
+        # 12 Carbon_content
         param = arcpy.Parameter()
         param.name = u'Carbon_content'
         param.displayName = u'Carbon: Does your dataset contain organic carbon or organic matter?'
@@ -188,7 +209,7 @@ class SoilParam(object):
         param.filter.list = [u'Organic carbon', u'Organic matter']
         params.append(param)
 
-        # 11 Conversion_factor
+        # 13 Conversion_factor
         param = arcpy.Parameter()
         param.name = u'Conversion_factor'
         param.displayName = u'Carbon: enter a conversion factor'
@@ -198,7 +219,7 @@ class SoilParam(object):
         param.value = u'1.724'
         params.append(param)
 
-        # 12 Rerun_tool
+        # 14 Rerun_tool
         param = arcpy.Parameter()
         param.name = u'Rerun_tool'
         param.displayName = u'Rerun tool (will continue previous run from the point where any errors occurred)'
@@ -225,7 +246,7 @@ class SoilParam(object):
 
     def execute(self, parameters, messages):
 
-        import LUCI_PTF.tools.t_soil_param as t_soil_param
+        import LUCI_PTFs.tools.t_soil_param as t_soil_param
         refresh_modules(t_soil_param)
 
         t_soil_param.function(parameters)

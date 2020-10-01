@@ -1,12 +1,12 @@
 import arcpy
 import os
 
-import LUCI_PTF.lib.log as log
-import LUCI_PTF.lib.common as common
-import LUCI_PTF.lib.progress as progress
-import LUCI_PTF.solo.soil_param as SoilParam
+import LUCI_PTFs.lib.log as log
+import LUCI_PTFs.lib.common as common
+import LUCI_PTFs.lib.progress as progress
+import LUCI_PTFs.solo.soil_param as SoilParam
 
-from LUCI_PTF.lib.refresh_modules import refresh_modules
+from LUCI_PTFs.lib.refresh_modules import refresh_modules
 refresh_modules([log, common, SoilParam])
 
 def function(params):
@@ -24,12 +24,14 @@ def function(params):
         VG = pText[7]
         KsatChoice = common.strToBool(pText[8])
         Ksat = pText[9]
-        carbonContent = pText[10]
-        carbonConFactor = pText[11]
+        MVGChoice =  common.strToBool(pText[10])
+        MVG = pText[11]
+        carbonContent = pText[12]
+        carbonConFactor = pText[13]
 
         # Rerun parameter may not present when tool run as part of a batch run tool. If it is not, set rerun to False.
         try:
-            rerun = common.strToBool(pText[12])
+            rerun = common.strToBool(pText[14])
         except IndexError:
             rerun = False
         except Exception:
@@ -187,6 +189,17 @@ def function(params):
             log.error('Invalid Ksat option')
             sys.exit()
 
+        # Set Mualem-Van Genuchten choice
+        if MVG == 'Wosten et al. (1999)':
+            MVGOption = 'Wosten_1999'
+
+        elif MVG == 'Weynants et al. (2009)':
+            MVGOption = 'Weynants_2009'
+
+        else:
+            log.error('Invalid Mualem-Van Genuchten option')
+            sys.exit()
+
         # Set carbon content choice
         if carbonContent == 'Organic carbon':
             carbContent = 'OC'
@@ -200,7 +213,7 @@ def function(params):
 
         # Call soil parameterisation function
         SoilParam.function(outputFolder, inputShapefile, PTFChoice, PTFOption,
-                           VGChoice, VGOption, KsatChoice, KsatOption,
+                           VGChoice, VGOption, KsatChoice, KsatOption, MVGChoice, MVGOption,
                            carbContent, carbonConFactor, rerun)
 
         log.info("Soil parameterisation operations completed successfully")

@@ -15,15 +15,15 @@ except NameError:
     	sys.exit()
 
 # Load and refresh the refresh_modules module
-from LUCI_PTF.lib.external.six.moves import reload_module
-import LUCI_PTF.lib.refresh_modules as refresh_modules
+from LUCI_PTFs.lib.external.six.moves import reload_module
+import LUCI_PTFs.lib.refresh_modules as refresh_modules
 reload_module(refresh_modules)
-from LUCI_PTF.lib.refresh_modules import refresh_modules
+from LUCI_PTFs.lib.refresh_modules import refresh_modules
 
-import LUCI_PTF.lib.input_validation as input_validation
+import LUCI_PTFs.lib.input_validation as input_validation
 refresh_modules(input_validation)
 
-import LUCI_PTF.tool_classes.c_SoilParam as c_SoilParam
+import LUCI_PTFs.tool_classes.c_SoilParam as c_SoilParam
 refresh_modules(c_SoilParam)
 SoilParam = c_SoilParam.SoilParam
 

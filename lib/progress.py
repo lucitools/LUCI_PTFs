@@ -5,10 +5,10 @@ import time
 import traceback
 import xml.etree.cElementTree as ET
 
-import LUCI_PTF.lib.log as log
-import LUCI_PTF.lib.common as common
+import LUCI_PTFs.lib.log as log
+import LUCI_PTFs.lib.common as common
 
-from LUCI_PTF.lib.refresh_modules import refresh_modules
+from LUCI_PTFs.lib.refresh_modules import refresh_modules
 refresh_modules([log, common])
 
 ### Global timing variables ###

@@ -1,6 +1,6 @@
 import os
 
-from LUCI_PTF.lib.external import six # Python 2/3 compatibility module
+from LUCI_PTFs.lib.external import six # Python 2/3 compatibility module
 
 def checkFilePaths(self):
 

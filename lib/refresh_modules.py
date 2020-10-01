@@ -3,7 +3,7 @@ import os
 import xml.etree.cElementTree as ET
 import traceback
 import configuration
-from LUCI_PTF.lib.external.six.moves import reload_module
+from LUCI_PTFs.lib.external.six.moves import reload_module
 
 def refresh_modules(modules):
 

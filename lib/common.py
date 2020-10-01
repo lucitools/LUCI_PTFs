@@ -7,11 +7,11 @@ import datetime # For writing current date/time to inputs.xml
 import time # For logging warnings that are very close together
 import xml.etree.cElementTree as ET
 
-from LUCI_PTF.lib.external import six # Python 2/3 compatibility module
+from LUCI_PTFs.lib.external import six # Python 2/3 compatibility module
 import configuration
-import LUCI_PTF.lib.log as log
+import LUCI_PTFs.lib.log as log
 
-from LUCI_PTF.lib.refresh_modules import refresh_modules
+from LUCI_PTFs.lib.refresh_modules import refresh_modules
 refresh_modules([log])
 
 def strToBool(s):
@@ -27,7 +27,7 @@ def strToBool(s):
 
 def runSystemChecks(folder=None, rerun=False):
 
-    import LUCI_PTF.lib.progress as progress
+    import LUCI_PTFs.lib.progress as progress
 
     # Set overwrite output
     arcpy.env.overwriteOutput = True

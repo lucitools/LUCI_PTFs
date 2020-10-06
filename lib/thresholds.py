@@ -14,7 +14,7 @@ refresh_modules([log])
 def checkValue(name, value, record):
     warningFlag = ''
 
-    log.info('DEBUG: checking ' + str(name) + ' is not negative or over 100')
+    # log.info('DEBUG: checking ' + str(name) + ' is not negative or over 100')
 
     if value < 0.0:
         warningFlag = str(name) + ' is negative'
@@ -29,7 +29,7 @@ def checkValue(name, value, record):
 def checkSSC(sand, silt, clay, record):
     warningFlag = ''
 
-    log.info('DEBUG: checking sand, silt, clay (negative and sum)')
+    # log.info('DEBUG: checking sand, silt, clay (negative and sum)')
 
     if sand < 0.0:
         warningFlag ='Sand is negative'
@@ -48,7 +48,7 @@ def checkSSC(sand, silt, clay, record):
 
     SSC = sand + silt + clay
 
-    log.info('DEBUG: SSC: ' + str(SSC))
+    # log.info('DEBUG: SSC: ' + str(SSC))
 
     if SSC < 99.0:
         warningFlag = 'SSC less than 99'
@@ -65,7 +65,7 @@ def checkSSC(sand, silt, clay, record):
 def checkCarbon(carbon, carbContent, record):
     warningFlag = ''
 
-    log.info('DEBUG: checking if carbon is negative or over 100')
+    # log.info('DEBUG: checking if carbon is negative or over 100')
 
     if carbon < 0.0:
         warningFlag = 'Carbon negative'
@@ -104,7 +104,7 @@ def checkCarbon(carbon, carbContent, record):
 def checkBatjes(sand, silt, clay, carbon, carbContent, record):
     warningFlag = ''
 
-    log.info('DEBUG: checking for Batjes')
+    # log.info('DEBUG: checking for Batjes')
 
     if sand < 5.0:
         warningFlag = 'Sand less than 5'

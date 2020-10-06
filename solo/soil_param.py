@@ -2996,7 +2996,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 vanGenuchten.writeOutputMVG(outputShp, Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kPaArray, Se_100kPaArray, Se_1500kPaArray, K_Se_1kPaArray, K_Se_3kPaArray, K_Se_10kPaArray, K_Se_33kPaArray, K_Se_100kPaArray, K_Se_1500kPaArray)
 
                 # Plotting functions
-                vanGenuchten.plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray)
+                vanGenuchten.plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray)
 
                 # Write the results to output shapefile
                 arcpy.AddField_management(outputShp, "warning", "TEXT")
@@ -3087,7 +3087,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write Se and K_Se results back to the shapefile
                 vanGenuchten.writeOutputMVG(outputShp, Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kPaArray, Se_100kPaArray, Se_1500kPaArray, K_Se_1kPaArray, K_Se_3kPaArray, K_Se_10kPaArray, K_Se_33kPaArray, K_Se_100kPaArray, K_Se_1500kPaArray)
 
-                ## TODO: put in plotting functions!
+                # Plotting functions
+                vanGenuchten.plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray)
 
                 # Write the results to output shapefile
                 arcpy.AddField_management(outputShp, "warning", "TEXT")

@@ -250,3 +250,71 @@ def writeOutputMVG(outputShp, Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kP
 
             cursor.updateRow(row)
             recordNum += 1
+
+def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray):
+    # Create Van Genuchten plots
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Plot 1: K(h) on the y-axis, h on the x-axis
+    outPath = os.path.join(outputFolder, 'plotMVG.png')
+    title = 'Mualem-van Genuchten plots of ' + str(len(record)) + ' records'
+
+    x = np.linspace(1.0, 15000.0, 100000)
+    labels = []
+    for i in range(0, len(record)):
+        y = K_satArray[i] * (((((1.0 + (alpha_VGArray[i] * x)**n_VGArray[i])**m_VGArray[i]) - (alpha_VGArray[i] * x)**(n_VGArray[i] - 1.0))**2.0) / (((1.0 + (alpha_VGArray[i] * x)**n_VGArray[i]))**(m_VGArray[i] * (l_MvGArray[i] + 2.0))))
+        plt.plot(x, y)
+
+    # plt.axvline(x=33.0)
+    # plt.axvline(x=0.0)
+    # plt.axvline(x=1500.0)
+    # plt.yscale('log')
+    plt.title(title)
+    plt.ylabel('k(h)')
+    plt.xlabel('kPa')
+    plt.savefig(outPath, transparent=False)
+    plt.close()
+    log.info('Plot created')
+
+    '''
+    # Plot 2: pressure on the x-axis, WC on the y-axis
+    outPath = os.path.join(outputFolder, 'plotVG_WC_yaxis.png')
+    title = 'Van Genuchten plots of ' + str(len(record)) + ' records (water content on y-axis)'
+
+    x = np.linspace(1.0, 2000.0, 10000)
+    labels = []
+    for i in range(0, len(record)):
+        y = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * x * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
+        plt.plot(x, y)
+
+    plt.axvline(x=33.0)
+    plt.axvline(x=0.0)
+    plt.axvline(x=1500.0)
+    plt.xscale('log')
+    plt.title(title)
+    plt.ylabel('Water content')
+    plt.xlabel('kPa')
+    plt.savefig(outPath, transparent=False)
+    plt.close()
+    log.info('Plot created with water content on the y-axis')
+
+    # Plot 3: WC on the y-axis zoomed in to 1 to 600 kPa
+    outPath = os.path.join(outputFolder, 'plotVG_200kPa.png')
+    title = 'Van Genuchten plots of ' + str(len(record)) + ' records (water content on y-axis)'
+
+    x = np.linspace(1.0, 300.0, 600)
+    labels = []
+    for i in range(0, len(record)):
+        y = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * x * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
+        plt.plot(x, y)
+
+    plt.axvline(x=33.0)
+    plt.axvline(x=0.0)
+    plt.title(title)
+    plt.ylabel('Water content')
+    plt.xlabel('kPa')
+    plt.savefig(outPath, transparent=False)
+    plt.close()
+    log.info('Plot created with lines for important thresholds')
+    '''

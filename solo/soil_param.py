@@ -12,10 +12,11 @@ import LUCI_PTFs.lib.log as log
 import LUCI_PTFs.lib.progress as progress
 import LUCI_PTFs.lib.common as common
 import LUCI_PTFs.lib.vanGenuchten as vanGenuchten
+import LUCI_PTFs.lib.thresholds as thresholds
 from LUCI_PTFs.lib.external import six # Python 2/3 compatibility module
 
 from LUCI_PTFs.lib.refresh_modules import refresh_modules
-refresh_modules([log, common, vanGenuchten])
+refresh_modules([log, common, vanGenuchten, thresholds])
 
 def checkInputFields(inputFields, inputShp):
 
@@ -34,27 +35,6 @@ def checkInputFields(inputFields, inputShp):
             log.error("Please ensure this field present in the input shapefile")
             sys.exit()
 
-def checkCarbon(carbon, carbContent, record):
-    warningFlag = ''
-
-    if carbon > 100.0:
-
-        warningFlag = 'OC or OM over 100'
-
-        if carbContent == 'OC':
-            msg = 'Organic carbon '
-            field = 'OC'
-        elif carbContent == 'OM':
-            msg = 'Organic matter '
-            field = 'OM'
-
-        warningMsg1 = str(msg) + "content (percentage) is higher than 100 percent"
-        log.warning(warningMsg1)
-        warningMsg2 = "Please check the field " + str(field) + " in record " + str(record)
-        log.warning(warningMsg2)
-
-    return warningFlag
-
 def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, KsatChoice, KsatOption, MVGChoice, MVGOption, carbContent, carbonConFactor, rerun=False):
 
     try:
@@ -67,10 +47,6 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
 
         # Set output filename
         outputShp = os.path.join(outputFolder, "soilParam.shp")
-
-        ## TODO: Put in checks for sand/silt/clay total to 100
-
-        ## TODO: Put in checks for if something is zero
 
         # Copy the input shapefile to the output folder
         arcpy.CopyFeatures_management(inputShp, outputShp)
@@ -127,7 +103,10 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 for x in range(0, len(record)):
 
                     # Data checks
-                    warningFlag = checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    
                     warningArray.append(warningFlag)
 
                     # Calculate water content using Nguyen et al. (2014)
@@ -205,6 +184,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         siltPerc.append(silt)
                         clayPerc.append(clay)
 
+                warningArray = []
                 WC_10kPaArray = []
                 WC_33kPaArray = []
                 WC_100kPaArray = []
@@ -214,6 +194,10 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Adhikary et al. (2008) m3m-3
                     WC_10kPa = 0.625 - (0.0058 * sandPerc[x]) - (0.0021 * siltPerc[x])
@@ -235,6 +219,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_100kPa", "DOUBLE", 10, 6)
@@ -243,17 +228,18 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 arcpy.AddField_management(outputShp, "WC_1000kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_300kPa", "WC_500kPa", "WC_1000kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_300kPa", "WC_500kPa", "WC_1000kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_10kPaArray[recordNum]
-                        row[1] = WC_33kPaArray[recordNum]
-                        row[2] = WC_100kPaArray[recordNum]
-                        row[3] = WC_300kPaArray[recordNum]
-                        row[4] = WC_500kPaArray[recordNum]
-                        row[5] = WC_1000kPaArray[recordNum]
-                        row[6] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_10kPaArray[recordNum]
+                        row[2] = WC_33kPaArray[recordNum]
+                        row[3] = WC_100kPaArray[recordNum]
+                        row[4] = WC_300kPaArray[recordNum]
+                        row[5] = WC_500kPaArray[recordNum]
+                        row[6] = WC_1000kPaArray[recordNum]
+                        row[7] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -296,6 +282,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_4kPaArray = []
                 WC_7kPaArray = []
                 WC_10kPaArray = []
@@ -310,6 +297,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Rawls et al. (1982) cm3cm-3
                     WC_4kPa = 0.7899 - (0.0037 * sandPerc[x]) + (0.01 * (carbPerc[x] * float(carbonConFactor))) - (0.1315 * BDg_cm3[x])
@@ -341,6 +334,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_4kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_7kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
@@ -354,22 +348,23 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 arcpy.AddField_management(outputShp, "WC_1000kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_4kPa", "WC_7kPa", "WC_10kPa", "WC_20kPa", "WC_33kPa", "WC_60kPa", "WC_100kPa", "WC_200kPa", "WC_400kPa", "WC_700kPa", "WC_1000kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_4kPa", "WC_7kPa", "WC_10kPa", "WC_20kPa", "WC_33kPa", "WC_60kPa", "WC_100kPa", "WC_200kPa", "WC_400kPa", "WC_700kPa", "WC_1000kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_4kPaArray[recordNum]
-                        row[1] = WC_7kPaArray[recordNum]
-                        row[2] = WC_10kPaArray[recordNum]
-                        row[3] = WC_20kPaArray[recordNum]
-                        row[4] = WC_33kPaArray[recordNum]
-                        row[5] = WC_60kPaArray[recordNum]
-                        row[6] = WC_100kPaArray[recordNum]
-                        row[7] = WC_200kPaArray[recordNum]
-                        row[8] = WC_400kPaArray[recordNum]
-                        row[9] = WC_700kPaArray[recordNum]
-                        row[10] = WC_1000kPaArray[recordNum]
-                        row[11] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_4kPaArray[recordNum]
+                        row[2] = WC_7kPaArray[recordNum]
+                        row[3] = WC_10kPaArray[recordNum]
+                        row[4] = WC_20kPaArray[recordNum]
+                        row[5] = WC_33kPaArray[recordNum]
+                        row[6] = WC_60kPaArray[recordNum]
+                        row[7] = WC_100kPaArray[recordNum]
+                        row[8] = WC_200kPaArray[recordNum]
+                        row[9] = WC_400kPaArray[recordNum]
+                        row[10] = WC_700kPaArray[recordNum]
+                        row[11] = WC_1000kPaArray[recordNum]
+                        row[12] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -397,6 +392,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         sandPerc.append(sand)
                         clayPerc.append(clay)
 
+                warningArray = []
                 WC_0kPaArray = []
                 WC_10kPaArray = []
                 WC_33kPaArray = []
@@ -407,6 +403,10 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 K_satArray = []
 
                 for x in range(0, len(record)):
+
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningArray.append(warningFlag)
                     
                     # Calculate water content using Saxton et. al (1986) m3m-3
                     WC_0kPa  = 0.332 - (7.251 * 10**(-4) * sandPerc[x]) + (0.1276 * math.log(clayPerc[x], 10.0))
@@ -436,6 +436,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_0kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
@@ -445,18 +446,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_0kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_200kPa", "WC_400kPa", "WC_1500kPa", "K_sat"]
+                outputFields = ["warning", "WC_0kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_200kPa", "WC_400kPa", "WC_1500kPa", "K_sat"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_0kPaArray[recordNum]
-                        row[1] = WC_10kPaArray[recordNum]
-                        row[2] = WC_33kPaArray[recordNum]
-                        row[3] = WC_100kPaArray[recordNum]
-                        row[4] = WC_200kPaArray[recordNum]
-                        row[5] = WC_400kPaArray[recordNum]
-                        row[6] = WC_1500kPaArray[recordNum]
-                        row[7] = K_satArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_0kPaArray[recordNum]
+                        row[2] = WC_10kPaArray[recordNum]
+                        row[3] = WC_33kPaArray[recordNum]
+                        row[4] = WC_100kPaArray[recordNum]
+                        row[5] = WC_200kPaArray[recordNum]
+                        row[6] = WC_400kPaArray[recordNum]
+                        row[7] = WC_1500kPaArray[recordNum]
+                        row[8] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -487,6 +489,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         siltPerc.append(silt)
                         BDg_cm3.append(BD)
 
+                
+                warningArray = []
                 WC_5kPaArray = []
                 WC_10kPaArray = []
                 WC_33kPaArray = []
@@ -494,6 +498,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 WC_1500kPaArray = []            
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Silt", siltPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     WC_5kPa = (37.20 + (0.35 * clayPerc[x]) + (0.12 * siltPerc[x]) - (11.73 * BDg_cm3[x])) * 10**(-2)
                     WC_10kPa = (27.87 + (0.41 * clayPerc[x]) + (0.15 * siltPerc[x]) - (8.32 * BDg_cm3[x])) * 10**(-2)
@@ -510,21 +520,23 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_5kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_200kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_5kPa", "WC_10kPa", "WC_33kPa", "WC_200kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_5kPa", "WC_10kPa", "WC_33kPa", "WC_200kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_5kPaArray[recordNum]
-                        row[1] = WC_10kPaArray[recordNum]
-                        row[2] = WC_33kPaArray[recordNum]
-                        row[3] = WC_200kPaArray[recordNum]
-                        row[4] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_5kPaArray[recordNum]
+                        row[2] = WC_10kPaArray[recordNum]
+                        row[3] = WC_33kPaArray[recordNum]
+                        row[4] = WC_200kPaArray[recordNum]
+                        row[5] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -567,6 +579,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_4kPaArray = []
                 WC_7kPaArray = []
                 WC_10kPaArray = []
@@ -581,6 +594,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Gupta and Larson (1979)- Salt, Silt, Clay, OM, BD
                     WC_4kPa = (7.053 * 10**(-3) * sandPerc[x]) + (10.242 * 10**(-3) * siltPerc[x]) + (10.07 * 10**(-3) * clayPerc[x]) + (6.333 * 10**(-3) * carbPerc[x]*float(carbonConFactor)) - (32.12 * 10**(-2) * BDg_cm3[x])
@@ -612,6 +631,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_4kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_7kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
@@ -625,22 +645,23 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 arcpy.AddField_management(outputShp, "WC_1000kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_4kPa", "WC_7kPa", "WC_10kPa", "WC_20kPa", "WC_33kPa", "WC_60kPa", "WC_100kPa", "WC_200kPa", "WC_400kPa", "WC_700kPa", "WC_1000kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_4kPa", "WC_7kPa", "WC_10kPa", "WC_20kPa", "WC_33kPa", "WC_60kPa", "WC_100kPa", "WC_200kPa", "WC_400kPa", "WC_700kPa", "WC_1000kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_4kPaArray[recordNum]
-                        row[1] = WC_7kPaArray[recordNum]
-                        row[2] = WC_10kPaArray[recordNum]
-                        row[3] = WC_20kPaArray[recordNum]
-                        row[4] = WC_33kPaArray[recordNum]
-                        row[5] = WC_60kPaArray[recordNum]
-                        row[6] = WC_100kPaArray[recordNum]
-                        row[7] = WC_200kPaArray[recordNum]
-                        row[8] = WC_400kPaArray[recordNum]
-                        row[9] = WC_700kPaArray[recordNum]
-                        row[10] = WC_1000kPaArray[recordNum]
-                        row[11] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_4kPaArray[recordNum]
+                        row[2] = WC_7kPaArray[recordNum]
+                        row[3] = WC_10kPaArray[recordNum]
+                        row[4] = WC_20kPaArray[recordNum]
+                        row[5] = WC_33kPaArray[recordNum]
+                        row[6] = WC_60kPaArray[recordNum]
+                        row[7] = WC_100kPaArray[recordNum]
+                        row[8] = WC_200kPaArray[recordNum]
+                        row[9] = WC_400kPaArray[recordNum]
+                        row[10] = WC_700kPaArray[recordNum]
+                        row[11] = WC_1000kPaArray[recordNum]
+                        row[12] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -677,6 +698,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         carbPerc.append(carbon)
 
+                warningArray = []
                 WC_satArray = []
                 WC_1kPaArray = []
                 WC_3kPaArray = []
@@ -689,6 +711,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks                    
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Silt", siltPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Batjes (1996) - Silt, Clay, OC
                     WC_sat = ((0.6903 * clayPerc[x]) + (0.5482 * siltPerc[x]) + (4.2844 * carbPerc[x] * float(carbonConFactor)))*10**(-2)
@@ -716,6 +744,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_sat", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_3kPa", "DOUBLE", 10, 6)
@@ -727,20 +756,21 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 arcpy.AddField_management(outputShp, "WC_250kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_sat", "WC_1kPa", "WC_3kPa", "WC_5kPa", "WC_10kPa", "WC_20kPa", "WC_33kPa", "WC_50kPa", "WC_250kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_sat", "WC_1kPa", "WC_3kPa", "WC_5kPa", "WC_10kPa", "WC_20kPa", "WC_33kPa", "WC_50kPa", "WC_250kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_satArray[recordNum]
-                        row[1] = WC_1kPaArray[recordNum]
-                        row[2] = WC_3kPaArray[recordNum]
-                        row[3] = WC_5kPaArray[recordNum]
-                        row[4] = WC_10kPaArray[recordNum]
-                        row[5] = WC_20kPaArray[recordNum]
-                        row[6] = WC_33kPaArray[recordNum]
-                        row[7] = WC_50kPaArray[recordNum]
-                        row[8] = WC_250kPaArray[recordNum]
-                        row[9] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_satArray[recordNum]
+                        row[2] = WC_1kPaArray[recordNum]
+                        row[3] = WC_3kPaArray[recordNum]
+                        row[4] = WC_5kPaArray[recordNum]
+                        row[5] = WC_10kPaArray[recordNum]
+                        row[6] = WC_20kPaArray[recordNum]
+                        row[7] = WC_33kPaArray[recordNum]
+                        row[8] = WC_50kPaArray[recordNum]
+                        row[9] = WC_250kPaArray[recordNum]
+                        row[10] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -778,6 +808,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         carbPerc.append(carbon)
 
+                warningArray = []
                 WC_33tkPaArray = []
                 WC_33kPaArray = []
                 WC_sat_33tkPaArray = []
@@ -788,6 +819,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 K_satArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Saxton and Rawls (2006) - Sand, Clay, OM
                     WC_33tkPa = (-0.00251 * sandPerc[x]) + (0.00195 * clayPerc[x]) + (0.00011 * carbPerc[x]*float(carbonConFactor)) + (0.0000006 * sandPerc[x] * carbPerc[x]*float(carbonConFactor)) - (0.0000027 * clayPerc[x] * carbPerc[x]*float(carbonConFactor)) + (0.0000452 * sandPerc[x] * clayPerc[x]) + 0.299
@@ -814,6 +851,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_33tkPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_s33tkPa", "DOUBLE", 10, 6)
@@ -823,18 +861,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_33tkPa", "WC_33kPa", "WC_s33tkPa", "WC_sat", "WC_s33kPa", "WC_1500tkP", "WC_1500kPa", "K_sat"]
+                outputFields = ["warning", "WC_33tkPa", "WC_33kPa", "WC_s33tkPa", "WC_sat", "WC_s33kPa", "WC_1500tkP", "WC_1500kPa", "K_sat"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_33tkPaArray[recordNum]
-                        row[1] = WC_33kPaArray[recordNum]
-                        row[2] = WC_sat_33tkPaArray[recordNum]
-                        row[3] = WC_satArray[recordNum]
-                        row[4] = WC_sat_33kPaArray[recordNum]
-                        row[5] = WC_1500tkPaArray[recordNum]
-                        row[6] = WC_1500kPaArray[recordNum]
-                        row[7] = K_satArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_33tkPaArray[recordNum]
+                        row[2] = WC_33kPaArray[recordNum]
+                        row[3] = WC_sat_33tkPaArray[recordNum]
+                        row[4] = WC_satArray[recordNum]
+                        row[5] = WC_sat_33kPaArray[recordNum]
+                        row[6] = WC_1500tkPaArray[recordNum]
+                        row[7] = WC_1500kPaArray[recordNum]
+                        row[8] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -874,6 +913,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_FCArray = []
                 WC_10kPaArray = []
                 WC_33kPaArray = []
@@ -881,7 +921,14 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
 
                 for x in range(0, len(record)):
 
-                    # Calculate water content using Pidgeon (1972) - Silt, Clay, OM
+                    # Data checks
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Silt", siltPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
+
+                    # Calculate water content using Pidgeon (1972) - Silt, Clay, OM, BD
                     WC_FC = (7.38 + (0.16 * siltPerc[x]) + (0.3 * clayPerc[x]) + (1.54 * carbPerc[x]*float(carbonConFactor))) * BDg_cm3[x] * 10**(-2)
                     WC_10kPa = ((WC_FC * 100) - 2.54)/91
                     WC_33kPa = ((WC_FC * 100) - 3.77)/95
@@ -895,19 +942,21 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_FC", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_FC", "WC_10kPa", "WC_33kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_FC", "WC_10kPa", "WC_33kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_FCArray[recordNum]
-                        row[1] = WC_10kPaArray[recordNum]
-                        row[2] = WC_33kPaArray[recordNum]
-                        row[3] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_FCArray[recordNum]
+                        row[2] = WC_10kPaArray[recordNum]
+                        row[3] = WC_33kPaArray[recordNum]
+                        row[4] = WC_1500kPaArray[recordNum]
                         
                         cursor.updateRow(row)
                         recordNum += 1
@@ -935,11 +984,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_10kPaArray = []
                 WC_33kPaArray = []
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Lal (1978)- Clay, BD
                     WC_10kPa = (0.102 + (0.003 * clayPerc[x])) * BDg_cm3[x]
@@ -953,17 +1008,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_10kPa", "WC_33kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_10kPa", "WC_33kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_10kPaArray[recordNum]
-                        row[1] = WC_33kPaArray[recordNum]
-                        row[2] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_10kPaArray[recordNum]
+                        row[2] = WC_33kPaArray[recordNum]
+                        row[3] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -972,7 +1029,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
 
             elif PTFOption == "AinaPeriaswamy_1985":
 
-                # Requirements: Clay and BD
+                # Requirements: Sand, clay and BD
                 reqFields = ["OBJECTID", "Sand", "Clay", "BD"]
                 checkInputFields(reqFields, inputShp)
 
@@ -994,10 +1051,18 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_33kPaArray = []
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
+
 
                     # Calculate water content using Aina and Periaswamy (1985)- Sand, Clay, BD
                     WC_33kPa = 0.6788 - (0.0055 * sandPerc[x]) - (0.0013 * BDg_cm3[x])
@@ -1009,15 +1074,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_33kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_33kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_33kPaArray[recordNum]
-                        row[1] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_33kPaArray[recordNum]
+                        row[2] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1026,7 +1093,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
 
             elif PTFOption == "ManriqueJones_1991":
 
-                # Requirements: Clay and BD
+                # Requirements: Sand, clay and BD
                 reqFields = ["OBJECTID", "Sand", "Clay", "BD"]
                 checkInputFields(reqFields, inputShp)
 
@@ -1048,10 +1115,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_33kPaArray = []
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Manrique and Jones (1991) - Sand, Clay, BD
                     if sandPerc[x] >= 75.0:
@@ -1067,15 +1141,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_33kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_33kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_33kPaArray[recordNum]
-                        row[1] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_33kPaArray[recordNum]
+                        row[2] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1115,13 +1191,21 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_10kPaArray = []
                 WC_33kPaArray = []
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
 
-                    # Calculate water content using van Den Berg et al. (1997) - Silt, Clay, OC
+                    # Data checks
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Silt", siltPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
+
+                    # Calculate water content using van Den Berg et al. (1997) - Silt, Clay, OC, BD
                     WC_10kPa = (10.88 + (0.347 * clayPerc[x]) + (0.211 * siltPerc[x]) + (1.756 * carbPerc[x]*float(carbonConFactor))) * 10**(-2)
                     WC_33kPa =  (3.83 + (0.272 * clayPerc[x]) + (0.212 * siltPerc[x])) * 10**(-2)
                     WC_1500kPa = ((0.334 * clayPerc[x] * BDg_cm3[x]) + (0.104 * siltPerc[x] * BDg_cm3[x])) * 10**(-2)
@@ -1133,17 +1217,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_10kPa", "WC_33kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_10kPa", "WC_33kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_10kPaArray[recordNum]
-                        row[1] = WC_33kPaArray[recordNum]
-                        row[2] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_10kPaArray[recordNum]
+                        row[2] = WC_33kPaArray[recordNum]
+                        row[3] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1180,6 +1266,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         carbPerc.append(carbon)
 
+                warningArray = []
                 WC_satArray = []
                 WC_1kPaArray = []
                 WC_kPaArray = []
@@ -1191,6 +1278,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Silt", siltPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Tomasella and Hodnett (1998) - Silt, Clay, OC
                     WC_sat = 0.01 * ((2.24 * carbPerc[x]*float(carbonConFactor)) + (0.298 * siltPerc[x]) + (0.159 * clayPerc[x]) + 37.937)
@@ -1216,6 +1309,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_sat", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_kPa", "DOUBLE", 10, 6)
@@ -1226,19 +1320,20 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 arcpy.AddField_management(outputShp, "WC_500kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_sat", "WC_1kPa", "WC_kPa", "WC_6kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_500kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_sat", "WC_1kPa", "WC_kPa", "WC_6kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_500kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_satArray[recordNum]
-                        row[1] = WC_1kPaArray[recordNum]
-                        row[2] = WC_kPaArray[recordNum]
-                        row[3] = WC_6kPaArray[recordNum]
-                        row[4] = WC_10kPaArray[recordNum]
-                        row[5] = WC_33kPaArray[recordNum]
-                        row[6] = WC_100kPaArray[recordNum]
-                        row[7] = WC_500kPaArray[recordNum]
-                        row[8] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_satArray[recordNum]
+                        row[2] = WC_1kPaArray[recordNum]
+                        row[3] = WC_kPaArray[recordNum]
+                        row[4] = WC_6kPaArray[recordNum]
+                        row[5] = WC_10kPaArray[recordNum]
+                        row[6] = WC_33kPaArray[recordNum]
+                        row[7] = WC_100kPaArray[recordNum]
+                        row[8] = WC_500kPaArray[recordNum]
+                        row[9] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1281,6 +1376,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_satArray = []
                 WC_10kPaArray = []
                 WC_33kPaArray = []
@@ -1289,6 +1385,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Reichert et al. (2009) (1) - Sand, Silt, Clay, OM, BD
                     WC_sat = BDg_cm3[x] * (0.415 + (0.26 * 10**(-2) * (clayPerc[x] + siltPerc[x])) + (0.61 * 10**(-2) * carbPerc[x]*float(carbonConFactor)) - 0.207 * BDg_cm3[x])
@@ -1308,6 +1410,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_sat", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
@@ -1315,16 +1418,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 arcpy.AddField_management(outputShp, "WC_500kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
                 
-                outputFields = ["WC_sat", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_500kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_sat", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_500kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_satArray[recordNum]
-                        row[1] = WC_10kPaArray[recordNum]
-                        row[2] = WC_33kPaArray[recordNum]
-                        row[3] = WC_100kPaArray[recordNum]
-                        row[4] = WC_500kPaArray[recordNum]
-                        row[5] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_satArray[recordNum]
+                        row[2] = WC_10kPaArray[recordNum]
+                        row[3] = WC_33kPaArray[recordNum]
+                        row[4] = WC_100kPaArray[recordNum]
+                        row[5] = WC_500kPaArray[recordNum]
+                        row[6] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1358,13 +1462,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_10kPaArray = []
                 WC_33kPaArray = []
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
 
-                    # Calculate water content using Reichert et al. (2009) (2)- Sand, Silt, Clay
+                    # Data checks
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
+
+                    # Calculate water content using Reichert et al. (2009) (2)- Sand, Silt, Clay, BD
                     WC_10kPa =  BDg_cm3[x] * (0.037 + (0.38 * 10**(-2) * (clayPerc[x] + siltPerc[x])))
                     WC_33kPa = BDg_cm3[x] * (0.366 - (0.34 * 10**(-2) * sandPerc[x]))
                     WC_1500kPa = BDg_cm3[x] * (0.236 + (0.045 * 10**(-2) * clayPerc[x]) - (0.21 * 10**(-2) * sandPerc[x]))
@@ -1376,17 +1486,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
                 
-                outputFields = ["WC_10kPa", "WC_33kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_10kPa", "WC_33kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_10kPaArray[recordNum]
-                        row[1] = WC_33kPaArray[recordNum]
-                        row[2] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_10kPaArray[recordNum]
+                        row[2] = WC_33kPaArray[recordNum]
+                        row[3] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1417,10 +1529,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_33kPaArray = []
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Botula Manyala (2013) - Sand, Clay, BD
                     WC_33kPa = 0.4193 - (0.0035 * sandPerc[x]) 
@@ -1432,15 +1551,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
                 
-                outputFields = ["WC_33kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_33kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_33kPaArray[recordNum]
-                        row[1] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_33kPaArray[recordNum]
+                        row[2] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1474,6 +1595,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_33kPaArray = []
                 WC_100kPaArray = []
                 WC_300kPaArray = []
@@ -1482,6 +1604,11 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Shwetha and Varija (2013) - Sand, Silt, Clay, BD
                     WC_33kPa = - 4.263 + (0.00194 * sandPerc[x]) + (0.02839 * siltPerc[x]) + (5.568 * BDg_cm3[x]) - (0.00005 * sandPerc[x]**2) - (0.00011 * sandPerc[x] * siltPerc[x]) + (0.00106 * sandPerc[x] * BDg_cm3[x]) - (0.00005 * siltPerc[x]**2) - (0.01158 * siltPerc[x] * BDg_cm3[x]) - (1.78 * BDg_cm3[x]**2)
@@ -1502,6 +1629,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_100kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_300kPa", "DOUBLE", 10, 6)
@@ -1509,16 +1637,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 arcpy.AddField_management(outputShp, "WC_1000kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
                 
-                outputFields = ["WC_33kPa", "WC_100kPa", "WC_300kPa", "WC_500kPa", "WC_1000kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_33kPa", "WC_100kPa", "WC_300kPa", "WC_500kPa", "WC_1000kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_33kPaArray[recordNum]
-                        row[1] = WC_100kPaArray[recordNum]
-                        row[2] = WC_300kPaArray[recordNum]
-                        row[3] = WC_500kPaArray[recordNum]
-                        row[4] = WC_1000kPaArray[recordNum]
-                        row[5] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_33kPaArray[recordNum]
+                        row[2] = WC_100kPaArray[recordNum]
+                        row[3] = WC_300kPaArray[recordNum]
+                        row[4] = WC_500kPaArray[recordNum]
+                        row[5] = WC_1000kPaArray[recordNum]
+                        row[6] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1552,14 +1681,20 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
 
-                        WC_10kPaArray = []
-                        WC_30kPaArray = []
-                        WC_100kPaArray = []
-                        WC_300kPaArray = []
-                        WC_500kPaArray = []
-                        WC_1500kPaArray = []
+                warningArray = []
+                WC_10kPaArray = []
+                WC_30kPaArray = []
+                WC_100kPaArray = []
+                WC_300kPaArray = []
+                WC_500kPaArray = []
+                WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Dashtaki et al. (2010) - Sand, Silt, Clay, BD
                     WC_10kPa = (34.3 - (0.38 * sandPerc[x]) + (12.4 * BDg_cm3[x])) * 10**(-2) 
@@ -1579,6 +1714,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_30kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_100kPa", "DOUBLE", 10, 6)
@@ -1586,16 +1722,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 arcpy.AddField_management(outputShp, "WC_500kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["WC_10kPa", "WC_30kPa", "WC_100kPa", "WC_300kPa", "WC_500kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_10kPa", "WC_30kPa", "WC_100kPa", "WC_300kPa", "WC_500kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_10kPaArray[recordNum]
-                        row[1] = WC_30kPaArray[recordNum]
-                        row[2] = WC_100kPaArray[recordNum]
-                        row[3] = WC_300kPaArray[recordNum]
-                        row[4] = WC_500kPaArray[recordNum]
-                        row[5] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_10kPaArray[recordNum]
+                        row[2] = WC_30kPaArray[recordNum]
+                        row[3] = WC_100kPaArray[recordNum]
+                        row[4] = WC_300kPaArray[recordNum]
+                        row[5] = WC_500kPaArray[recordNum]
+                        row[6] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1635,10 +1772,18 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_33kPaArray = []
                 WC_1500kPaArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Santra et al. (2018) - Sand, Clay, OC, BD
                     WC_33kPa = (24.98 - (0.205 * sandPerc[x]) + (0.28 * clayPerc[x]) + (0.192 * carbPerc[x]*float(carbonConFactor) * 10)) * BDg_cm3[x] * 10**(-2)
@@ -1650,15 +1795,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write results back to the shapefile
 
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
                 
-                outputFields = ["WC_33kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_33kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = WC_33kPaArray[recordNum]
-                        row[1] = WC_1500kPaArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_33kPaArray[recordNum]
+                        row[2] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1712,7 +1859,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         BDg_cm3.append(BD)
 
                 K_satArray = []
-
+                warningArray = []
                 WC_satArray = []
                 WC_residualArray = []
                 alpha_VGArray = []
@@ -1720,6 +1867,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 m_VGArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate VG parameters                    
                     if clayPerc[x] < 18.0 and sandPerc[x] > 65.0:
@@ -1753,15 +1906,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write water content results back to the shapefile
                 vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)                
 
-                # Write Ksat results to output shapefile
+                # Write results to output shapefile
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["K_sat"]
+                outputFields = ["warning", "K_sat"]
                 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = K_satArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -1803,6 +1958,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_satArray = []
                 WC_residualArray = []
                 alpha_VGArray = []
@@ -1810,6 +1966,13 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 m_VGArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     WC_sat = 0.81 - (0.283 * BDg_cm3[x]) + (0.001 * clayPerc[x])
                     WC_residual = 0.015 + (0.005 * clayPerc[x]) + (0.014 * carbPerc[x]*float(carbonConFactor))
@@ -1835,6 +1998,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write water content results back to the shapefile
                 vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
 
+                # Write results to output shapefile
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
+
+                outputFields = ["warning"]
+
+                recordNum = 0
+                with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                    for row in cursor:
+                        row[0] = warningArray[recordNum]
+
+                        cursor.updateRow(row)
+                        recordNum += 1
+
                 log.info("Results written to the output shapefile inside the output folder")
 
             elif VGOption == "ZachariasWessolek_2007":
@@ -1848,7 +2024,6 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 record = []
                 sandPerc = []
                 clayPerc = []
-
                 BDg_cm3 = []
 
                 with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
@@ -1863,6 +2038,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_satArray = []
                 WC_residualArray = []
                 alpha_VGArray = []
@@ -1870,6 +2046,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 m_VGArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     if sandPerc[x] < 66.5:
                         WC_residual = 0
@@ -1902,6 +2084,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
 
                 # Write water content results back to the shapefile
                 vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
+
+                # Write the results to output shapefile
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
+
+                outputFields = ["warning"]
+                
+                recordNum = 0
+                with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                    for row in cursor:
+                        row[0] = warningArray[recordNum]
+
+                        cursor.updateRow(row)
+                        recordNum += 1
 
                 log.info("Results written to the output shapefile inside the output folder")
 
@@ -1940,6 +2135,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_satArray = []
                 WC_residualArray = []
                 alpha_VGArray = []
@@ -1947,6 +2143,13 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 m_VGArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     WC_residual = 0
                     WC_sat = 0.6355 + (0.0013 * clayPerc[x]) - (0.1631 * BDg_cm3[x])
@@ -1971,6 +2174,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
 
                 # Write water content results back to the shapefile
                 vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
+
+                # Write the results to output shapefile
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
+
+                outputFields = ["warning"]
+
+                recordNum = 0
+                with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                    for row in cursor:
+                        row[0] = warningArray[recordNum]
+
+                        cursor.updateRow(row)
+                        recordNum += 1
 
                 log.info("Results written to the output shapefile inside the output folder")
 
@@ -1999,6 +2215,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 WC_satArray = []
                 WC_residualArray = []
                 alpha_VGArray = []
@@ -2006,6 +2223,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 m_VGArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate water content using Dashtaki et al. (2010) - Sand, Clay, BD
                     WC_residual = 0.03 + (0.0032 * clayPerc[x])
@@ -2032,13 +2255,26 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write water content results back to the shapefile
                 vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
 
+                # Write the results to output shapefile
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
+
+                outputFields = ["warning"]
+                
+                recordNum = 0
+                with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                    for row in cursor:
+                        row[0] = warningArray[recordNum]
+
+                        cursor.updateRow(row)
+                        recordNum += 1
+                
                 log.info("Results written to the output shapefile inside the output folder")
 
             elif VGOption == "HodnettTomasella_2002":
 
                 log.info("Calculating van Genuchten parameters using Hodnett and Tomasella (2002)")
 
-                # Requirements: Sand, Silt, Clay, OC, BD, CEC,  pH
+                # Requirements: Sand, Silt, Clay, OC, BD, CEC, pH
                 if carbContent == 'OC':
                     reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OC", "BD", "CEC", "pH"]                    
                     carbonConFactor = 1.0
@@ -2078,6 +2314,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         CECcmol_kg.append(CEC)
                         pH.append(pHValue)
 
+                warningArray = []
                 WC_satArray = []
                 WC_residualArray = []
                 alpha_VGArray = []
@@ -2085,6 +2322,14 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 m_VGArray = []
 
                 for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningFlag = thresholds.checkValue("CEC", CECcmol_kg[x], record[x])
+                    warningFlag = thresholds.checkValue("pH", pH[x], record[x])
+                    warningArray.append(warningFlag)
 
                     WC_sat = 0.81799 + (9.9 * 10**(-4) * clayPerc[x]) - (0.3142 * BDg_cm3[x]) + (1.8 * 10**(-4) * CECcmol_kg[x]) + (0.00451 * pH[x]) - (5 * 10**(-6) * sandPerc[x] * clayPerc[x])
                     WC_residual = 0.22733 - (0.00164 * sandPerc[x]) + (0.00235 * CECcmol_kg[x]) - (0.00831 * pH[x]) + (1.8 * 10**(-5) * clayPerc[x]**2) + (2.6 * 10**(-5) * sandPerc[x] * clayPerc[x])
@@ -2110,6 +2355,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write water content results back to the shapefile
                 vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
 
+                # Write the results to output shapefile
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
+
+                outputFields = ["warning"]
+                
+                recordNum = 0
+                with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                    for row in cursor:
+                        row[0] = warningArray[recordNum]
+
+                        cursor.updateRow(row)
+                        recordNum += 1                
+
                 log.info("Results written to the output shapefile inside the output folder")
 
             else:
@@ -2124,7 +2382,6 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
         if KsatChoice == True:
 
             if KsatOption == 'Cosby_1984':
-                # Requirements: sand and clay
 
                 log.info("Calculating saturated hydraulic conductivity using Cosby et al. (1984)")
 
@@ -2147,23 +2404,31 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         sandPerc.append(sand)
                         clayPerc.append(clay)
 
+                warningArray = []
                 K_satArray = []
 
                 for x in range(0, len(record)):
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningArray.append(warningFlag)
+
                     K_sat = 25.4 * 10**(-0.6 + (0.0126 * sandPerc[x]) - (0.0064 * clayPerc[x]))
 
                     K_satArray.append(K_sat)
 
                 # Write results back to the shapefile
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["K_sat"]
+                outputFields = ["warning", "K_sat"]
                 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = K_satArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -2175,7 +2440,6 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
 
                 log.info("Calculating saturated hydraulic conductivity using Puckett et al. (1985)")
 
-                # Requirements: sand and clay                    
                 reqFields = ["OBJECTID", "Clay"]
                 checkInputFields(reqFields, outputShp)
 
@@ -2191,23 +2455,30 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         record.append(objectID)
                         clayPerc.append(clay)
 
+                warningArray = []
                 K_satArray = []
 
                 for x in range(0, len(record)):
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningArray.append(warningFlag)
+
                     K_sat = 156.96 * math.exp(-0.1975 * clayPerc[x])
                     
                     K_satArray.append(K_sat)
 
                 # Write results back to the shapefile
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["K_sat"]
+                outputFields = ["warning", "K_sat"]
                 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = K_satArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -2239,23 +2510,32 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 K_satArray = []
 
                 for x in range(0, len(record)):
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Silt", siltPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
+
                     K_sat = 10**(9.56 - (0.81 * math.log(siltPerc[x], 10.0)) - (1.09 * math.log(clayPerc[x], 10.0)) - (4.64 * BDg_cm3[x])) * (10.0 / 24.0)
 
                     K_satArray.append(K_sat)
 
                 # Write results back to the shapefile
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["K_sat"]
+                outputFields = ["warning", "K_sat"]
                 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = K_satArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -2263,7 +2543,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 log.info("Results written to the output shapefile inside the output folder")
 
             elif KsatOption == "CampbellShiozawa_1994":
-                log.info("Calculating saturated hydraulic conductivity using Cambell and Shiozawa (1994)")
+                log.info("Calculating saturated hydraulic conductivity using Campbell and Shiozawa (1994)")
 
                 # Requirements: silt, clay
                 reqFields = ["OBJECTID", "Silt", "Clay"]
@@ -2284,23 +2564,31 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         siltPerc.append(silt)
                         clayPerc.append(clay)
 
+                warningArray = []
                 K_satArray = []
 
                 for x in range(0, len(record)):
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Silt", siltPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningArray.append(warningFlag)
+
                     K_sat = 54.0 * math.exp((- 0.07 * siltPerc[x]) - (0.167 * clayPerc[x]))
 
                     K_satArray.append(K_sat)
 
                 # Write results back to the shapefile
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["K_sat"]
+                outputFields = ["warning", "K_sat"]
                 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = K_satArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -2310,7 +2598,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
             elif KsatOption == "FerrerJulia_2004_1":
                 log.info("Calculating saturated hydraulic conductivity using Ferrer Julia et al. (2004) using sand")
 
-                # Requirements: silt, clay
+                # Requirements: sand
                 reqFields = ["OBJECTID", "Sand"]
                 checkInputFields(reqFields, outputShp)
 
@@ -2326,23 +2614,30 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         record.append(objectID)
                         sandPerc.append(sand)
 
+                warningArray = []
                 K_satArray = []
 
                 for x in range(0, len(record)):
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningArray.append(warningFlag)
+
                     K_sat = 0.920 * math.exp(0.0491 * sandPerc[x])
                     
                     K_satArray.append(K_sat)
 
                 # Write results back to the shapefile
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["K_sat"]
+                outputFields = ["warning", "K_sat"]
                 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = K_satArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -2352,8 +2647,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
             elif KsatOption == "FerrerJulia_2004_2":
                 log.info("Calculating saturated hydraulic conductivity using Ferrer Julia et al. (2004) using sand, clay, and organic matter")
 
-                # Requirements: sand, clay, OM
-
+                # Requirements: sand, clay, OM, BD
                 if carbContent == 'OC':
                     reqFields = ["OBJECTID", "Sand", "Clay", "OC", "BD"]
                     carbonConFactor = 1.724
@@ -2385,23 +2679,33 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 K_satArray = []
 
                 for x in range(0, len(record)):
+                    # Data checks
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
+
                     K_sat = - 4.994 + (0.56728 * sandPerc[x]) - (0.131 * clayPerc[x]) - (0.0127 * carbPerc[x]*float(carbonConFactor))
 
                     K_satArray.append(K_sat)
 
                 # Write results back to the shapefile
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["K_sat"]
+                outputFields = ["warning", "K_sat"]
                 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = K_satArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -2528,23 +2832,32 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         clayPerc.append(clay)
                         WC_satArray.append(WCsat)
 
+                warningArray = []
                 K_satArray = []
 
                 for x in range(0, len(record)):
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Sand", sandPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+
+                    warningArray.append(warningFlag)
+
                     K_sat = 10 * math.exp((19.52348 * WC_satArray[x]) - 8.96847 - (0.028212 * clayPerc[x]) + (0.00018107 * sandPerc[x]**2) - (0.0094125 * clayPerc[x]**2) - (8.395215 * WC_satArray[x]**2) + (0.077718 * sandPerc[x] * WC_satArray[x]) - (0.00298 * sandPerc[x]**2 * WC_satArray[x]**2) - (0.019492 * clayPerc[x]**2 * WC_satArray[x]**2) + (0.0000173 * sandPerc[x]**2 * clayPerc[x]) + (0.02733 * clayPerc[x]**2 * WC_satArray[x]) + (0.001434 * sandPerc[x]**2 * WC_satArray[x]) - (0.0000035 * clayPerc[x]**2 * sandPerc[x]))
 
                     K_satArray.append(K_sat)
 
                 # Write results back to the shapefile
                 # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["K_sat"]
+                outputFields = ["warning", "K_sat"]
                 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
-                        row[0] = K_satArray[recordNum]
+                        row[0] = warningArray[recordNum]
+                        row[1] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1
@@ -2593,6 +2906,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 K_satArray = []
                 WC_satArray = []
                 WC_residualArray = []
@@ -2603,6 +2917,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 l_MvGArray = []
 
                 for x in range(0, len(record)):
+                    # Data checks
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Silt", siltPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
 
                     # Calculate Mualem Van Genuchten parameters using Wosten et al. (1999) - Clay, Silt, OM, BD
                     K_sat = 10.0 / 24.0 * math.exp(7.755 + (0.0352 * siltPerc[x]) + 0.93 - (0.976 * BDg_cm3[x]**2) - (0.000484 * clayPerc[x]**2) - (0.000322 * siltPerc[x]**2) + (0.001 * siltPerc[x]**(-1)) - (0.0748 * (carbPerc[x]*float(carbonConFactor))**(-1)) - (0.643 * math.log(siltPerc[x])) - (0.0139 * BDg_cm3[x] * clayPerc[x]) - (0.167 * BDg_cm3[x] * carbPerc[x] * float(carbonConFactor)) + (0.0298 * clayPerc[x]) - (0.03305 * siltPerc[x]))
@@ -2635,7 +2955,21 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 # Write Se and K_Se results back to the shapefile
                 vanGenuchten.writeOutputMVG(outputShp, Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kPaArray, Se_100kPaArray, Se_1500kPaArray, K_Se_1kPaArray, K_Se_3kPaArray, K_Se_10kPaArray, K_Se_33kPaArray, K_Se_100kPaArray, K_Se_1500kPaArray)
 
-                ## TODO: put in plotting functions!                
+                # Plotting functions
+                vanGenuchten.plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray)
+
+                # Write the results to output shapefile
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
+
+                outputFields = ["warning"]
+                
+                recordNum = 0
+                with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                    for row in cursor:
+                        row[0] = warningArray[recordNum]
+
+                        cursor.updateRow(row)
+                        recordNum += 1               
                     
             elif MVGOption == 'Weynants_2009':
 
@@ -2676,6 +3010,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
 
+                warningArray = []
                 K_satArray = []
                 WC_satArray = []
                 WC_residualArray = []
@@ -2685,6 +3020,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 l_MvGArray = []
 
                 for x in range(0, len(record)):
+                    # Data checks
+                    warningFlag = thresholds.checkSSC(sandPerc[x], siltPerc[x], clayPerc[x], record[x])
+                    warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
+
                     K_sat = math.exp(1.9582 + (0.0308 * sandPerc[x]) - (0.6142 * BDg_cm3[x]) - (0.1566 * (carbPerc[x] * float(carbonConFactor)))) * (10.0 / 24.0)
                     WC_residual = 0.0
                     WC_sat = 0.6355 + (0.0013 * clayPerc[x]) - (0.1631 * BDg_cm3[x])                    
@@ -2708,6 +3049,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
 
                 ## TODO: put in plotting functions!
 
+                # Write the results to output shapefile
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
+
+                outputFields = ["warning"]
+                
+                recordNum = 0
+                with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                    for row in cursor:
+                        row[0] = warningArray[recordNum]
+
+                        cursor.updateRow(row)
+                        recordNum += 1
+
             else:
                 log.error('Ksat option not recognised')
                 log.error('Please choose a Ksat option from the drop down menu')
@@ -2726,5 +3080,6 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 exec(lyr + ' = None') in locals()
         except Exception:
             pass
+
 
 

@@ -151,7 +151,17 @@ class SoilParam(object):
                              u'Dashtaki et al. (2010)', u'Hodnett and Tomasella (2002)']
         params.append(param)
 
-        # 8 Calculate_Ksat
+        # 8 Pressure_heads_VG
+        param = arcpy.Parameter()
+        param.name = u'Pressure_heads_VG'
+        param.displayName = u'Specify pressures to calculate water content using van Genuchten (space delimited)'
+        param.parameterType = 'Optional'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'1 3 10 33 100 200 1000 1500'
+        params.append(param)
+
+        # 9 Calculate_Ksat
         param = arcpy.Parameter()
         param.name = u'Calculate_Ksat'
         param.displayName = u'Estimate saturated hydraulic conductivity (Ksat)'
@@ -161,7 +171,7 @@ class SoilParam(object):
         param.value = u'False'
         params.append(param)
 
-        # 9 Ksat_of_choice
+        # 10 Ksat_of_choice
         param = arcpy.Parameter()
         param.name = u'Ksat_of_choice'
         param.displayName = u'Estimate saturated hydraulic conductivity'
@@ -177,7 +187,7 @@ class SoilParam(object):
                              u'Brakensiek et al. (1984)']
         params.append(param)
 
-        # 10 Calculate_MVG
+        # 11 Calculate_MVG
         param = arcpy.Parameter()
         param.name = u'Calculate_MVG'
         param.displayName = u'Estimate unsaturated hydraulic conductivity and generate hydraulic conductivity curve using parametric-PTFs for Mualem van Genuchten model'
@@ -187,7 +197,7 @@ class SoilParam(object):
         param.value = u'False'
         params.append(param)
 
-        # 11 MVG_of_choice
+        # 12 MVG_of_choice
         param = arcpy.Parameter()
         param.name = u'MVG_of_choice'
         param.displayName = u'Estimate Mualem van Genuchten model parameters'
@@ -198,7 +208,7 @@ class SoilParam(object):
         param.filter.list = [u'Wosten et al. (1999)', u'Weynants et al. (2009)']
         params.append(param)
 
-        # 12 Carbon_content
+        # 13 Carbon_content
         param = arcpy.Parameter()
         param.name = u'Carbon_content'
         param.displayName = u'Carbon: Does your dataset contain organic carbon or organic matter?'
@@ -209,7 +219,7 @@ class SoilParam(object):
         param.filter.list = [u'Organic carbon', u'Organic matter']
         params.append(param)
 
-        # 13 Conversion_factor
+        # 14 Conversion_factor
         param = arcpy.Parameter()
         param.name = u'Conversion_factor'
         param.displayName = u'Carbon: enter a conversion factor'
@@ -219,7 +229,7 @@ class SoilParam(object):
         param.value = u'1.724'
         params.append(param)
 
-        # 14 Rerun_tool
+        # 15 Rerun_tool
         param = arcpy.Parameter()
         param.name = u'Rerun_tool'
         param.displayName = u'Rerun tool (will continue previous run from the point where any errors occurred)'

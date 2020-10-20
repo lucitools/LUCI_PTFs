@@ -1,6 +1,7 @@
 import arcpy
 import os
 import sys
+import csv
 
 from LUCI_PTFs.lib.external import six # Python 2/3 compatibility module
 import configuration
@@ -161,6 +162,36 @@ def plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n
     plt.savefig(outPath, transparent=False)
     plt.close()
     log.info('Plot created with lines for important thresholds')
+
+def calcPressuresVG(x, WC_residual, WC_sat, alpha_VG, n_VG, m_VG, vgPressures):
+
+    # Calculates water content at user-input pressures
+    record = x + 1
+    wcValues = [record]
+
+    for pressure in vgPressures:
+
+        waterContent = WC_residual + ((WC_sat - WC_residual) / ((1.0 + ((alpha_VG * pressure * 10.0) ** n_VG))) ** m_VG)
+        wcValues.append(waterContent)
+
+    return wcValues
+
+def writeWaterContent(outputFolder, record, headings, wcArrays):
+
+    outCSV = os.path.join(outputFolder, 'WaterContent.csv')
+
+    with open(outCSV, 'wb') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(headings)
+
+        for i in range(0, len(record)):
+            row = wcArrays[i]
+            writer.writerow(row)
+
+        msg = 'Output CSV with water content saved to: ' + str(outCSV)
+        log.info(msg)
+
+    csv_file.close()
 
 def calcMVG(K_sat, alpha_VG, n_VG, m_VG, l_MvG):
 

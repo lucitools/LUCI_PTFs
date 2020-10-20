@@ -35,7 +35,7 @@ def checkInputFields(inputFields, inputShp):
             log.error("Please ensure this field present in the input shapefile")
             sys.exit()
 
-def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, KsatChoice, KsatOption, MVGChoice, MVGOption, carbContent, carbonConFactor, rerun=False):
+def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, VGPressArray, KsatChoice, KsatOption, MVGChoice, MVGOption, carbContent, carbonConFactor, rerun=False):
 
     try:
         # Set temporary variables
@@ -1860,6 +1860,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
 
         elif VGChoice == True:
 
+            # Initialise the pressure head array
+            x = np.array(VGPressArray)
+            vgPressures = x.astype(np.float)
+
+            headings = ['Record']
+            wcArrays = []
+
+            for pressure in vgPressures:
+                headName = 'WC_' + str(pressure) + 'kPa'
+                headings.append(headName)
+
             if VGOption == "Wosten_1999":
                 log.info("Calculating van Genuchten parameters using Wosten et al. (1999)")
 
@@ -1934,6 +1945,11 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                     # Calculate water content at VG pressures
                     WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
+                    # Calculate water content at custom VG pressures
+                    wcValues = vanGenuchten.calcPressuresVG(x, WC_residual, WC_sat, alpha_VG, n_VG, m_VG, vgPressures)
+                    wcArrays.append(wcValues)
+
+                    # Calculate saturated hydraulic conductivity
                     K_sat = (10.0 / 24.0) * math.exp(7.755 + (0.0352 * siltPerc[x]) + (0.93 * 1) - (0.976 * BDg_cm3[x]**2) - (0.000484 * clayPerc[x]**2) - (0.000322 * siltPerc[x]**2) + (0.001 * siltPerc[x]**(-1)) - (0.0748 * (carbPerc[x]*float(carbonConFactor))**(-1)) - (0.643 * math.log(siltPerc[x])) - (0.0139 * BDg_cm3[x] * clayPerc[x]) - (0.167 * BDg_cm3[x] * carbPerc[x]*float(carbonConFactor)) + (0.0298 * 1 * clayPerc[x]) - (0.03305 * 1 * siltPerc[x]))
                     K_satArray.append(K_sat)
 
@@ -1944,7 +1960,10 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, K
                 vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Write water content results back to the shapefile
-                vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)                
+                vanGenuchten.writeOutputVG(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
+
+                # Write water content results to a CSV
+                vanGenuchten.writeWaterContent(outputFolder, record, headings, wcArrays)
 
                 # Write results to output shapefile
                 arcpy.AddField_management(outputShp, "warning", "TEXT")

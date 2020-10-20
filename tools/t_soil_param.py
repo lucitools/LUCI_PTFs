@@ -22,16 +22,17 @@ def function(params):
         PTF = pText[5]
         VGChoice = common.strToBool(pText[6])
         VG = pText[7]
-        KsatChoice = common.strToBool(pText[8])
-        Ksat = pText[9]
-        MVGChoice =  common.strToBool(pText[10])
-        MVG = pText[11]
-        carbonContent = pText[12]
-        carbonConFactor = pText[13]
+        VGPressures = pText[8]
+        KsatChoice = common.strToBool(pText[9])
+        Ksat = pText[10]
+        MVGChoice =  common.strToBool(pText[11])
+        MVG = pText[12]
+        carbonContent = pText[13]
+        carbonConFactor = pText[14]
 
         # Rerun parameter may not present when tool run as part of a batch run tool. If it is not, set rerun to False.
         try:
-            rerun = common.strToBool(pText[14])
+            rerun = common.strToBool(pText[15])
         except IndexError:
             rerun = False
         except Exception:
@@ -211,9 +212,15 @@ def function(params):
             log.error('Invalid carbon content option')
             sys.exit()
 
+        # Unpack 'VG pressure heads' parameter
+        if VGPressures is None:
+            VGPressArray = []
+        else:
+            VGPressArray = VGPressures.split(' ')
+
         # Call soil parameterisation function
         SoilParam.function(outputFolder, inputShapefile, PTFChoice, PTFOption,
-                           VGChoice, VGOption, KsatChoice, KsatOption, MVGChoice, MVGOption,
+                           VGChoice, VGOption, VGPressArray, KsatChoice, KsatOption, MVGChoice, MVGOption,
                            carbContent, carbonConFactor, rerun)
 
         log.info("Soil parameterisation operations completed successfully")

@@ -409,3 +409,27 @@ def CheckField(checkfile, fieldname):
     except Exception:
         log.error("Error occurred while checking if field " + fieldname + " exists in file " + checkfile)
         raise
+
+def CleanFields(checkfile, fieldstokeep):
+
+    try:
+        desc = arcpy.Describe(checkfile)
+        List = arcpy.ListFields(checkfile)
+        fieldNameList = []
+
+        for field in List:
+            if not field.required:
+                if field.name not in fieldstokeep:
+                    fieldNameList.append(field.name)
+
+        # dBASE tables require a field other than an OID and Shape.  If this is
+        #  the case, retain an extra field (the first one in the original list)
+        if desc.dataType in ["ShapeFile", "DbaseTable"]:
+            fieldNameList = fieldNameList[1:]
+
+        arcpy.DeleteField_management(checkfile, fieldNameList)
+
+    except Exception:
+        log.error("Error occurred while attempting to clean unwanted fields in file " + checkfile)
+        raise
+

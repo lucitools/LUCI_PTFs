@@ -1871,7 +1871,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 headName = 'WC_' + str(pressure) + 'kPa'
                 headings.append(headName)
 
-            if VGOption == "Wosten_1999":
+            if str(VGOption[0:11]) == "Wosten_1999":
                 log.info("Calculating van Genuchten parameters using Wosten et al. (1999)")
 
                 # Requirements: sand, silt, clay, OM, and BD
@@ -1931,10 +1931,19 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     else:
                         WC_residual = 0.01
 
-                    WC_sat = 0.7919 + (0.001691 * clayPerc[x]) - (0.29619 * BDg_cm3[x]) - (0.000001491 * siltPerc[x]**2) + (0.0000821 * ((carbPerc[x] * float(carbonConFactor)))**2) + (0.02427 * clayPerc[x] **(-1.0) + (0.01113 * siltPerc[x]**(-1.0)) +  (0.01472 * math.log(siltPerc[x])) - 0.0000733 * ((carbPerc[x] * float(carbonConFactor))) * clayPerc[x]) - (0.000619 * BDg_cm3[x] * clayPerc[x]) - (0.001183 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) - (0.0001664 * 1.0 * siltPerc[x])
-                    alpha_VG = math.exp(- 14.96 + (0.03135 * clayPerc[x]) + (0.0351 * siltPerc[x]) + (0.646 * (carbPerc[x] * float(carbonConFactor))) + (15.29 * BDg_cm3[x]) - (0.192 * 1.0) - (4.671 * BDg_cm3[x] ** 2.0) - (0.000781 * clayPerc[x]) - (0.00687 * (carbPerc[x] * float(carbonConFactor)) ** 2.0) + (0.0449 * ((carbPerc[x] * float(carbonConFactor)))**(-1.0)) + (0.0663 * math.log(siltPerc[x])) + (0.1482 * math.log((carbPerc[x] * float(carbonConFactor)))) - (0.04546 * BDg_cm3[x] * siltPerc[x]) - (0.4852 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00673 * 1.0 * clayPerc[x]))
-                    n_VG = math.exp(-25.23 - (0.02195 * clayPerc[x]) + (0.0074 * siltPerc[x]) - (0.1940 * (carbPerc[x] * float(carbonConFactor))) + (45.5 * BDg_cm3[x]) - (7.24 * BDg_cm3[x] ** 2.0) +  (0.0003658 * clayPerc[x] **2.0) + (0.002885 * ((carbPerc[x] * float(carbonConFactor)))**2.0) - (12.81 * (BDg_cm3[x])**(-1.0)) - (0.1524 * (siltPerc[x])**(-1.0)) - (0.01958 * ((carbPerc[x] * float(carbonConFactor)))** (-1.0)) - (0.2876 * math.log(siltPerc[x])) - (0.0709 * math.log((carbPerc[x] * float(carbonConFactor)))) - (44.6 * math.log(BDg_cm3[x])) - (0.02264 * BDg_cm3[x] * clayPerc[x]) + (0.0896 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00718 * 1.0 * clayPerc[x])) + 1
-                    m_VG = 1.0 - (1.0 / float(n_VG))
+                    if VGOption == 'Wosten_1999_top':
+
+                        WC_sat = 0.7919 + (0.001691 * clayPerc[x]) - (0.29619 * BDg_cm3[x]) - (0.000001491 * siltPerc[x]**2) + (0.0000821 * ((carbPerc[x] * float(carbonConFactor)))**2) + (0.02427 * clayPerc[x] **(-1.0) + (0.01113 * siltPerc[x]**(-1.0)) +  (0.01472 * math.log(siltPerc[x])) - 0.0000733 * ((carbPerc[x] * float(carbonConFactor))) * clayPerc[x]) - (0.000619 * BDg_cm3[x] * clayPerc[x]) - (0.001183 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) - (0.0001664 * 1.0 * siltPerc[x])
+                        alpha_VG = math.exp(- 14.96 + (0.03135 * clayPerc[x]) + (0.0351 * siltPerc[x]) + (0.646 * (carbPerc[x] * float(carbonConFactor))) + (15.29 * BDg_cm3[x]) - (0.192 * 1.0) - (4.671 * BDg_cm3[x] ** 2.0) - (0.000781 * clayPerc[x]) - (0.00687 * (carbPerc[x] * float(carbonConFactor)) ** 2.0) + (0.0449 * ((carbPerc[x] * float(carbonConFactor)))**(-1.0)) + (0.0663 * math.log(siltPerc[x])) + (0.1482 * math.log((carbPerc[x] * float(carbonConFactor)))) - (0.04546 * BDg_cm3[x] * siltPerc[x]) - (0.4852 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00673 * 1.0 * clayPerc[x]))
+                        n_VG = math.exp(-25.23 - (0.02195 * clayPerc[x]) + (0.0074 * siltPerc[x]) - (0.1940 * (carbPerc[x] * float(carbonConFactor))) + (45.5 * BDg_cm3[x]) - (7.24 * BDg_cm3[x] ** 2.0) +  (0.0003658 * clayPerc[x] **2.0) + (0.002885 * ((carbPerc[x] * float(carbonConFactor)))**2.0) - (12.81 * (BDg_cm3[x])**(-1.0)) - (0.1524 * (siltPerc[x])**(-1.0)) - (0.01958 * ((carbPerc[x] * float(carbonConFactor)))** (-1.0)) - (0.2876 * math.log(siltPerc[x])) - (0.0709 * math.log((carbPerc[x] * float(carbonConFactor)))) - (44.6 * math.log(BDg_cm3[x])) - (0.02264 * BDg_cm3[x] * clayPerc[x]) + (0.0896 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00718 * 1.0 * clayPerc[x])) + 1
+                        m_VG = 1.0 - (1.0 / float(n_VG))
+
+                    elif VGOption == 'Wosten_1999_sub':
+
+                        WC_sat = 0.7919 + (0.001691 * clayPerc[x]) - (0.29619 * BDg_cm3[x]) - (0.000001491 * siltPerc[x]**2) + (0.0000821 * ((carbPerc[x] * float(carbonConFactor)))**2) + (0.02427 * clayPerc[x] **(-1.0) + (0.01113 * siltPerc[x]**(-1.0)) +  (0.01472 * math.log(siltPerc[x])) - 0.0000733 * ((carbPerc[x] * float(carbonConFactor))) * clayPerc[x]) - (0.000619 * BDg_cm3[x] * clayPerc[x]) - (0.001183 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) - (0.0001664 * 0.0 * siltPerc[x])
+                        alpha_VG = math.exp(- 14.96 + (0.03135 * clayPerc[x]) + (0.0351 * siltPerc[x]) + (0.646 * (carbPerc[x] * float(carbonConFactor))) + (15.29 * BDg_cm3[x]) - (0.192 * 0.0) - (4.671 * BDg_cm3[x] ** 2.0) - (0.000781 * clayPerc[x]) - (0.00687 * (carbPerc[x] * float(carbonConFactor)) ** 2.0) + (0.0449 * ((carbPerc[x] * float(carbonConFactor)))**(-1.0)) + (0.0663 * math.log(siltPerc[x])) + (0.1482 * math.log((carbPerc[x] * float(carbonConFactor)))) - (0.04546 * BDg_cm3[x] * siltPerc[x]) - (0.4852 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00673 * 0.0 * clayPerc[x]))
+                        n_VG = math.exp(-25.23 - (0.02195 * clayPerc[x]) + (0.0074 * siltPerc[x]) - (0.1940 * (carbPerc[x] * float(carbonConFactor))) + (45.5 * BDg_cm3[x]) - (7.24 * BDg_cm3[x] ** 2.0) +  (0.0003658 * clayPerc[x] **2.0) + (0.002885 * ((carbPerc[x] * float(carbonConFactor)))**2.0) - (12.81 * (BDg_cm3[x])**(-1.0)) - (0.1524 * (siltPerc[x])**(-1.0)) - (0.01958 * ((carbPerc[x] * float(carbonConFactor)))** (-1.0)) - (0.2876 * math.log(siltPerc[x])) - (0.0709 * math.log((carbPerc[x] * float(carbonConFactor)))) - (44.6 * math.log(BDg_cm3[x])) - (0.02264 * BDg_cm3[x] * clayPerc[x]) + (0.0896 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00718 * 0.0 * clayPerc[x])) + 1
+                        m_VG = 1.0 - (1.0 / float(n_VG))
 
                     WC_satArray.append(WC_sat)
                     WC_residualArray.append(WC_residual)
@@ -2930,7 +2939,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
 
         if MVGChoice == True:
 
-            if MVGOption == 'Wosten_1999':
+            if str(MVGOption[0:11]) == 'Wosten_1999':
+
                 log.info("Calculating Mualem-Van Genuchten parameters using Wosten et al. (1999)")
 
                 # Requirements: silt, clay, OM, and BD
@@ -2983,8 +2993,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
                     warningArray.append(warningFlag)
 
-                    # Calculate Mualem Van Genuchten parameters using Wosten et al. (1999) - Clay, Silt, OM, BD
-                    K_sat = 10.0 / 24.0 * math.exp(7.755 + (0.0352 * siltPerc[x]) + 0.93 - (0.976 * BDg_cm3[x]**2) - (0.000484 * clayPerc[x]**2) - (0.000322 * siltPerc[x]**2) + (0.001 * siltPerc[x]**(-1)) - (0.0748 * (carbPerc[x]*float(carbonConFactor))**(-1)) - (0.643 * math.log(siltPerc[x])) - (0.0139 * BDg_cm3[x] * clayPerc[x]) - (0.167 * BDg_cm3[x] * carbPerc[x] * float(carbonConFactor)) + (0.0298 * clayPerc[x]) - (0.03305 * siltPerc[x]))
+                    # Calculate Mualem Van Genuchten parameters using Wosten et al. (1999) - Clay, Silt, OM, BD                    
 
                     # Mualem Van Genuchten parameters: 
                     if clayPerc[x] < 18.0 and sandPerc[x] > 65.0:
@@ -2992,13 +3001,28 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     else:
                         WC_residual = 0.01
 
-                    WC_sat = 0.7919 + (0.001691 * clayPerc[x]) - (0.29619 * BDg_cm3[x]) - (0.000001491 * siltPerc[x]**2) + (0.0000821 * ((carbPerc[x] * float(carbonConFactor)))**2) + (0.02427 * clayPerc[x] **(-1.0) + (0.01113 * siltPerc[x]**(-1.0)) +  (0.01472 * math.log(siltPerc[x])) - 0.0000733 * ((carbPerc[x] * float(carbonConFactor))) * clayPerc[x]) - (0.000619 * BDg_cm3[x] * clayPerc[x]) - (0.001183 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) - (0.0001664 * 1.0 * siltPerc[x])
-                    alpha_VG = math.exp(- 14.96 + (0.03135 * clayPerc[x]) + (0.0351 * siltPerc[x]) + (0.646 * (carbPerc[x] * float(carbonConFactor))) + (15.29 * BDg_cm3[x]) - (0.192 * 1.0) - (4.671 * BDg_cm3[x] ** 2.0) - (0.000781 * clayPerc[x]) - (0.00687 * (carbPerc[x] * float(carbonConFactor)) ** 2.0) + (0.0449 * ((carbPerc[x] * float(carbonConFactor)))**(-1.0)) + (0.0663 * math.log(siltPerc[x])) + (0.1482 * math.log((carbPerc[x] * float(carbonConFactor)))) - (0.04546 * BDg_cm3[x] * siltPerc[x]) - (0.4852 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00673 * 1.0 * clayPerc[x]))
-                    n_VG = math.exp(-25.23 - (0.02195 * clayPerc[x]) + (0.0074 * siltPerc[x]) - (0.1940 * (carbPerc[x] * float(carbonConFactor))) + (45.5 * BDg_cm3[x]) - (7.24 * BDg_cm3[x] ** 2.0) +  (0.0003658 * clayPerc[x] **2.0) + (0.002885 * ((carbPerc[x] * float(carbonConFactor)))**2.0) - (12.81 * (BDg_cm3[x])**(-1.0)) - (0.1524 * (siltPerc[x])**(-1.0)) - (0.01958 * ((carbPerc[x] * float(carbonConFactor)))** (-1.0)) - (0.2876 * math.log(siltPerc[x])) - (0.0709 * math.log((carbPerc[x] * float(carbonConFactor)))) - (44.6 * math.log(BDg_cm3[x])) - (0.02264 * BDg_cm3[x] * clayPerc[x]) + (0.0896 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00718 * 1.0 * clayPerc[x])) + 1
-                    m_VG = 1.0 - (1.0 / float(n_VG))
+                    if MVGOption == 'Wosten_1999_top':
+                        K_sat = 10.0 / 24.0 * math.exp(7.755 + (0.0352 * siltPerc[x]) + 0.93 - (0.976 * BDg_cm3[x]**2) - (0.000484 * clayPerc[x]**2) - (0.000322 * siltPerc[x]**2) + (0.001 * siltPerc[x]**(-1)) - (0.0748 * (carbPerc[x]*float(carbonConFactor))**(-1)) - (0.643 * math.log(siltPerc[x])) - (0.0139 * BDg_cm3[x] * clayPerc[x]) - (0.167 * BDg_cm3[x] * carbPerc[x] * float(carbonConFactor)) + (0.0298 * clayPerc[x]) - (0.03305 * siltPerc[x]))
 
-                    l_MvG_norm = 0.0202 + (0.0006193 * clayPerc[x]**2) - (0.001136 * (carbPerc[x]*float(carbonConFactor))**2) - (0.2316 * math.log(carbPerc[x]*float(carbonConFactor))) - (0.03544 * BDg_cm3[x] * clayPerc[x]) + (0.00283 * BDg_cm3[x] * siltPerc[x]) + (0.0488 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor)))
-                    l_MvG =  10 * (math.exp(l_MvG_norm) - 1) / (math.exp(l_MvG_norm)+1)
+                        WC_sat = 0.7919 + (0.001691 * clayPerc[x]) - (0.29619 * BDg_cm3[x]) - (0.000001491 * siltPerc[x]**2) + (0.0000821 * ((carbPerc[x] * float(carbonConFactor)))**2) + (0.02427 * clayPerc[x] **(-1.0) + (0.01113 * siltPerc[x]**(-1.0)) +  (0.01472 * math.log(siltPerc[x])) - 0.0000733 * ((carbPerc[x] * float(carbonConFactor))) * clayPerc[x]) - (0.000619 * BDg_cm3[x] * clayPerc[x]) - (0.001183 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) - (0.0001664 * 1.0 * siltPerc[x])
+                        alpha_VG = math.exp(- 14.96 + (0.03135 * clayPerc[x]) + (0.0351 * siltPerc[x]) + (0.646 * (carbPerc[x] * float(carbonConFactor))) + (15.29 * BDg_cm3[x]) - (0.192 * 1.0) - (4.671 * BDg_cm3[x] ** 2.0) - (0.000781 * clayPerc[x]) - (0.00687 * (carbPerc[x] * float(carbonConFactor)) ** 2.0) + (0.0449 * ((carbPerc[x] * float(carbonConFactor)))**(-1.0)) + (0.0663 * math.log(siltPerc[x])) + (0.1482 * math.log((carbPerc[x] * float(carbonConFactor)))) - (0.04546 * BDg_cm3[x] * siltPerc[x]) - (0.4852 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00673 * 1.0 * clayPerc[x]))
+                        n_VG = math.exp(-25.23 - (0.02195 * clayPerc[x]) + (0.0074 * siltPerc[x]) - (0.1940 * (carbPerc[x] * float(carbonConFactor))) + (45.5 * BDg_cm3[x]) - (7.24 * BDg_cm3[x] ** 2.0) +  (0.0003658 * clayPerc[x] **2.0) + (0.002885 * ((carbPerc[x] * float(carbonConFactor)))**2.0) - (12.81 * (BDg_cm3[x])**(-1.0)) - (0.1524 * (siltPerc[x])**(-1.0)) - (0.01958 * ((carbPerc[x] * float(carbonConFactor)))** (-1.0)) - (0.2876 * math.log(siltPerc[x])) - (0.0709 * math.log((carbPerc[x] * float(carbonConFactor)))) - (44.6 * math.log(BDg_cm3[x])) - (0.02264 * BDg_cm3[x] * clayPerc[x]) + (0.0896 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00718 * 1.0 * clayPerc[x])) + 1
+                        m_VG = 1.0 - (1.0 / float(n_VG))
+
+                        l_MvG_norm = 0.0202 + (0.0006193 * clayPerc[x]**2) - (0.001136 * (carbPerc[x]*float(carbonConFactor))**2) - (0.2316 * math.log(carbPerc[x]*float(carbonConFactor))) - (0.03544 * BDg_cm3[x] * clayPerc[x]) + (0.00283 * BDg_cm3[x] * siltPerc[x]) + (0.0488 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor)))
+                        l_MvG =  10 * (math.exp(l_MvG_norm) - 1) / (math.exp(l_MvG_norm)+1)
+
+                    elif MVGOption == 'Wosten_1999_sub':
+                        K_sat = 10.0 / 24.0 * math.exp(7.755 + (0.0352 * siltPerc[x]) + 0.93 - (0.976 * BDg_cm3[x]**2) - (0.000484 * clayPerc[x]**2) - (0.000322 * siltPerc[x]**2) + (0.001 * siltPerc[x]**(-1)) - (0.0748 * (carbPerc[x]*float(carbonConFactor))**(-1)) - (0.643 * math.log(siltPerc[x])) - (0.0139 * BDg_cm3[x] * clayPerc[x]) - (0.167 * BDg_cm3[x] * carbPerc[x] * float(carbonConFactor)) + (0.0298 * clayPerc[x]) - (0.03305 * siltPerc[x]))
+
+                        WC_sat = 0.7919 + (0.001691 * clayPerc[x]) - (0.29619 * BDg_cm3[x]) - (0.000001491 * siltPerc[x]**2) + (0.0000821 * ((carbPerc[x] * float(carbonConFactor)))**2) + (0.02427 * clayPerc[x] **(-1.0) + (0.01113 * siltPerc[x]**(-1.0)) +  (0.01472 * math.log(siltPerc[x])) - 0.0000733 * ((carbPerc[x] * float(carbonConFactor))) * clayPerc[x]) - (0.000619 * BDg_cm3[x] * clayPerc[x]) - (0.001183 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) - (0.0001664 * 0.0 * siltPerc[x])
+                        alpha_VG = math.exp(- 14.96 + (0.03135 * clayPerc[x]) + (0.0351 * siltPerc[x]) + (0.646 * (carbPerc[x] * float(carbonConFactor))) + (15.29 * BDg_cm3[x]) - (0.192 * 0.0) - (4.671 * BDg_cm3[x] ** 2.0) - (0.000781 * clayPerc[x]) - (0.00687 * (carbPerc[x] * float(carbonConFactor)) ** 2.0) + (0.0449 * ((carbPerc[x] * float(carbonConFactor)))**(-1.0)) + (0.0663 * math.log(siltPerc[x])) + (0.1482 * math.log((carbPerc[x] * float(carbonConFactor)))) - (0.04546 * BDg_cm3[x] * siltPerc[x]) - (0.4852 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00673 * 0.0 * clayPerc[x]))
+                        n_VG = math.exp(-25.23 - (0.02195 * clayPerc[x]) + (0.0074 * siltPerc[x]) - (0.1940 * (carbPerc[x] * float(carbonConFactor))) + (45.5 * BDg_cm3[x]) - (7.24 * BDg_cm3[x] ** 2.0) +  (0.0003658 * clayPerc[x] **2.0) + (0.002885 * ((carbPerc[x] * float(carbonConFactor)))**2.0) - (12.81 * (BDg_cm3[x])**(-1.0)) - (0.1524 * (siltPerc[x])**(-1.0)) - (0.01958 * ((carbPerc[x] * float(carbonConFactor)))** (-1.0)) - (0.2876 * math.log(siltPerc[x])) - (0.0709 * math.log((carbPerc[x] * float(carbonConFactor)))) - (44.6 * math.log(BDg_cm3[x])) - (0.02264 * BDg_cm3[x] * clayPerc[x]) + (0.0896 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor))) + (0.00718 * 0.0 * clayPerc[x])) + 1
+                        m_VG = 1.0 - (1.0 / float(n_VG))
+
+                        l_MvG_norm = 0.0202 + (0.0006193 * clayPerc[x]**2) - (0.001136 * (carbPerc[x]*float(carbonConFactor))**2) - (0.2316 * math.log(carbPerc[x]*float(carbonConFactor))) - (0.03544 * BDg_cm3[x] * clayPerc[x]) + (0.00283 * BDg_cm3[x] * siltPerc[x]) + (0.0488 * BDg_cm3[x] * (carbPerc[x] * float(carbonConFactor)))
+                        l_MvG =  10 * (math.exp(l_MvG_norm) - 1) / (math.exp(l_MvG_norm)+1)
+
 
                     K_satArray.append(K_sat)
                     WC_satArray.append(WC_sat)
@@ -3123,8 +3147,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         recordNum += 1
 
             else:
-                log.error('Ksat option not recognised')
-                log.error('Please choose a Ksat option from the drop down menu')
+                log.error('Mualem-Van Genuchten option not recognised')
+                log.error('Please choose a Mualem-Van Genuchten option from the drop down menu')
                 sys.exit()
 
 

@@ -145,9 +145,10 @@ class SoilParam(object):
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
-        param.value = u'Wosten et al. (1999)'
-        param.filter.list = [u'Wosten et al. (1999)', u'Vereecken et al. (1989)',
-                             u'Zacharias and Wessolek (2007)', u'Weynants et al. (2009)',
+        param.value = u'Wosten et al. (1999) topsoil'
+        param.filter.list = [u'Wosten et al. (1999) topsoil', u'Wosten et al. (1999) subsoil',
+                             u'Vereecken et al. (1989)', u'Zacharias and Wessolek (2007)',
+                             u'Weynants et al. (2009)',
                              u'Dashtaki et al. (2010)', u'Hodnett and Tomasella (2002)']
         params.append(param)
 
@@ -204,8 +205,9 @@ class SoilParam(object):
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
-        param.value = u'Wosten et al. (1999)'
-        param.filter.list = [u'Wosten et al. (1999)', u'Weynants et al. (2009)']
+        param.value = u'Wosten et al. (1999) topsoil'
+        param.filter.list = [u'Wosten et al. (1999) topsoil', u'Wosten et al. (1999) subsoil',
+                             u'Weynants et al. (2009)']
         params.append(param)
 
         # 13 Carbon_content

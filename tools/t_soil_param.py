@@ -136,8 +136,11 @@ def function(params):
             log.error('Invalid PTF option')
             sys.exit()
 
-        if VG == "Wosten et al. (1999)":
-            VGOption = "Wosten_1999"
+        if VG == "Wosten et al. (1999) topsoil":
+            VGOption = "Wosten_1999_top"
+
+        elif VG == "Wosten et al. (1999) subsoil":
+            VGOption = "Wosten_1999_sub"
 
         elif VG == "Vereecken et al. (1989)":
             VGOption = "Vereecken_1989"
@@ -191,8 +194,11 @@ def function(params):
             sys.exit()
 
         # Set Mualem-Van Genuchten choice
-        if MVG == 'Wosten et al. (1999)':
-            MVGOption = 'Wosten_1999'
+        if MVG == "Wosten et al. (1999) topsoil":
+            MVGOption = "Wosten_1999_top"
+
+        elif MVG == "Wosten et al. (1999) subsoil":
+            MVGOption = "Wosten_1999_sub"
 
         elif MVG == 'Weynants et al. (2009)':
             MVGOption = 'Weynants_2009'

@@ -465,7 +465,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
 
                 log.info("Results written to the output shapefile inside the output folder")
 
-            elif PTFOption == "Hall_1977":
+            elif PTFOption == "Hall_1977_top":
 
                 # Requirements: silt, clay, OC, and BD
                 if carbContent == 'OC':
@@ -506,12 +506,6 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 WC_200kPaArray = []
                 WC_1500kPaArray = []
 
-                sub_WC_5kPaArray = []
-                sub_WC_10kPaArray = []
-                sub_WC_33kPaArray = []
-                sub_WC_200kPaArray = []
-                sub_WC_1500kPaArray = []
-
                 for x in range(0, len(record)):
 
                     # Data checks
@@ -533,36 +527,17 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_200kPaArray.append(WC_200kPa)
                     WC_1500kPaArray.append(WC_1500kPa)
 
-                    # Subsoil
-                    sub_WC_5kPa = (37.20 + (0.35 * clayPerc[x]) + (0.12 * siltPerc[x]) - (11.73 * BDg_cm3[x])) * 10**(-2)
-                    sub_WC_10kPa = (27.87 + (0.41 * clayPerc[x]) + (0.15 * siltPerc[x]) - (8.32 * BDg_cm3[x])) * 10**(-2)
-                    sub_WC_33kPa = (20.81 + (0.45 * clayPerc[x]) + (0.13 * siltPerc[x]) - (5.96 * BDg_cm3[x])) * 10**(-2)
-                    sub_WC_200kPa = (7.57 + (0.48 * clayPerc[x]) + (0.11 * siltPerc[x])) * 10**(-2)
-                    sub_WC_1500kPa = (1.48 + (0.84 * clayPerc[x]) - (0.0054 * clayPerc[x]**2)) * 10**(-2)
-                    
-                    sub_WC_5kPaArray.append(sub_WC_5kPa)
-                    sub_WC_10kPaArray.append(sub_WC_10kPa)
-                    sub_WC_33kPaArray.append(sub_WC_33kPa)
-                    sub_WC_200kPaArray.append(sub_WC_200kPa)
-                    sub_WC_1500kPaArray.append(sub_WC_1500kPa)
-
                 # Write results back to the shapefile
 
                 # Add fields
                 arcpy.AddField_management(outputShp, "warning", "TEXT")
-                arcpy.AddField_management(outputShp, "t_WC5", "DOUBLE", 10, 6)
-                arcpy.AddField_management(outputShp, "t_WC10", "DOUBLE", 10, 6)
-                arcpy.AddField_management(outputShp, "t_WC33", "DOUBLE", 10, 6)
-                arcpy.AddField_management(outputShp, "t_WC200", "DOUBLE", 10, 6)
-                arcpy.AddField_management(outputShp, "t_WC1500", "DOUBLE", 10, 6)
+                arcpy.AddField_management(outputShp, "WC_5kPa", "DOUBLE", 10, 6)
+                arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
+                arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
+                arcpy.AddField_management(outputShp, "WC_200kPa", "DOUBLE", 10, 6)
+                arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                arcpy.AddField_management(outputShp, "s_WC5", "DOUBLE", 10, 6)
-                arcpy.AddField_management(outputShp, "s_WC10", "DOUBLE", 10, 6)
-                arcpy.AddField_management(outputShp, "s_WC33", "DOUBLE", 10, 6)
-                arcpy.AddField_management(outputShp, "s_WC200", "DOUBLE", 10, 6)
-                arcpy.AddField_management(outputShp, "s_WC1500", "DOUBLE", 10, 6)
-
-                outputFields = ["warning", "t_WC5", "t_WC10", "t_WC33", "t_WC200", "t_WC1500", "s_WC5", "s_WC10", "s_WC33", "s_WC200", "s_WC1500"]
+                outputFields = ["warning", "WC_5kPa", "WC_10kPa", "WC_33kPa", "WC_200kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
@@ -572,11 +547,94 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         row[3] = WC_33kPaArray[recordNum]
                         row[4] = WC_200kPaArray[recordNum]
                         row[5] = WC_1500kPaArray[recordNum]
-                        row[6] = sub_WC_5kPaArray[recordNum]
-                        row[7] = sub_WC_10kPaArray[recordNum]
-                        row[8] = sub_WC_33kPaArray[recordNum]
-                        row[9] = sub_WC_200kPaArray[recordNum]
-                        row[10] = sub_WC_1500kPaArray[recordNum]
+
+                        cursor.updateRow(row)
+                        recordNum += 1
+
+                log.info("Results written to the output shapefile inside the output folder")
+            
+            elif PTFOption == "Hall_1977_sub":
+
+                # Requirements: silt, clay, OC, and BD
+                if carbContent == 'OC':
+                    reqFields = ["OBJECTID", "Clay", "Silt", "OC", "BD"]
+                    carbonConFactor = 1.0
+
+                elif carbContent == 'OM':
+                    reqFields = ["OBJECTID", "Clay", "Silt", "OM", "BD"]
+
+                checkInputFields(reqFields, inputShp)                   
+
+                # Retrieve info from input
+                record = []
+                clayPerc = []
+                siltPerc = []
+                carbPerc = []
+                BDg_cm3 = []
+
+                with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
+                    for row in searchCursor:
+                        objectID = row[0]
+                        clay = row[1]
+                        silt = row[2]
+                        carbon = row[3]
+                        BD = row[4]
+
+                        record.append(objectID)
+                        clayPerc.append(clay)
+                        siltPerc.append(silt)
+                        carbPerc.append(carbon)
+                        BDg_cm3.append(BD)
+
+                
+                warningArray = []
+                WC_5kPaArray = []
+                WC_10kPaArray = []
+                WC_33kPaArray = []
+                WC_200kPaArray = []
+                WC_1500kPaArray = []
+
+                for x in range(0, len(record)):
+
+                    # Data checks
+                    warningFlag = thresholds.checkValue("Clay", clayPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Silt", siltPerc[x], record[x])
+                    warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                    warningArray.append(warningFlag)
+
+                    # Subsoil
+                    WC_5kPa = (37.20 + (0.35 * clayPerc[x]) + (0.12 * siltPerc[x]) - (11.73 * BDg_cm3[x])) * 10**(-2)
+                    WC_10kPa = (27.87 + (0.41 * clayPerc[x]) + (0.15 * siltPerc[x]) - (8.32 * BDg_cm3[x])) * 10**(-2)
+                    WC_33kPa = (20.81 + (0.45 * clayPerc[x]) + (0.13 * siltPerc[x]) - (5.96 * BDg_cm3[x])) * 10**(-2)
+                    WC_200kPa = (7.57 + (0.48 * clayPerc[x]) + (0.11 * siltPerc[x])) * 10**(-2)
+                    WC_1500kPa = (1.48 + (0.84 * clayPerc[x]) - (0.0054 * clayPerc[x]**2)) * 10**(-2)
+                    
+                    WC_5kPaArray.append(WC_5kPa)
+                    WC_10kPaArray.append(WC_10kPa)
+                    WC_33kPaArray.append(WC_33kPa)
+                    WC_200kPaArray.append(WC_200kPa)
+                    WC_1500kPaArray.append(WC_1500kPa)
+
+                # Write results back to the shapefile
+
+                # Add fields
+                arcpy.AddField_management(outputShp, "warning", "TEXT")
+                arcpy.AddField_management(outputShp, "WC_5kPa", "DOUBLE", 10, 6)
+                arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
+                arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
+                arcpy.AddField_management(outputShp, "WC_200kPa", "DOUBLE", 10, 6)
+                arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
+
+                outputFields = ["warning", "WC_5kPa", "WC_10kPa", "WC_33kPa", "WC_200kPa", "WC_1500kPa"]
+                recordNum = 0
+                with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                    for row in cursor:
+                        row[0] = warningArray[recordNum]
+                        row[1] = WC_5kPaArray[recordNum]
+                        row[2] = WC_10kPaArray[recordNum]
+                        row[3] = WC_33kPaArray[recordNum]
+                        row[4] = WC_200kPaArray[recordNum]
+                        row[5] = WC_1500kPaArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1

@@ -118,7 +118,7 @@ class SoilParam(object):
         param.value = u'Nguyen et al. (2014)'
         param.filter.list = [u'Nguyen et al. (2014)', u'Adhikary et al. (2008)',
                              u'Rawls et al. (1982)', u'Saxton et al. (1986)',
-                             u'Hall et al. (1977)', u'Gupta and Larson (1979)',
+                             u'Hall et al. (1977) topsoil', u'Hall et al. (1977) subsoil', u'Gupta and Larson (1979)',
                              u'Batjes (1996)', u'Saxton and Rawls (2006)',
                              u'Pidgeon (1972)', u'Lal (1978)', u'Aina and Periaswamy (1985)',
                              u'Manrique and Jones (1991)', u'van Den Berg et al. (1997)',

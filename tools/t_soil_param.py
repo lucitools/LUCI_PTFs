@@ -84,8 +84,11 @@ def function(params):
         elif PTF == 'Saxton et al. (1986)':
             PTFOption = 'Saxton_1986'
 
-        elif PTF == 'Hall et al. (1977)':
-            PTFOption = 'Hall_1977'
+        elif PTF == 'Hall et al. (1977) topsoil':
+            PTFOption = 'Hall_1977_top'
+
+        elif PTF == 'Hall et al. (1977) subsoil':
+            PTFOption = 'Hall_1977_sub'
 
         elif PTF == 'Gupta and Larson (1979)':
             PTFOption = 'GuptaLarson_1979'

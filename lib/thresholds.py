@@ -123,3 +123,12 @@ def checkBatjes(sand, silt, clay, carbon, carbContent, record):
         log.warning('Batjes (1996) requires carbon content to be at least 0.1 percent, check record: ' + str(record))
 
     return warningFlag
+
+def checkNegOutput(array, record):
+    # Checks if the output is negative and returns a warning
+
+    for output in array:
+
+        if output < 0.0:
+            warningFlag = 'Soil moisture value is negative for record ' + str(record)
+            log.warning(warningFlag)

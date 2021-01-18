@@ -119,6 +119,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_100kPa = (- 0.003 * sandPerc[x]) - (0.107 * BDg_cm3[x]) + 0.497
                     WC_1500kPa = (- 0.002 * sandPerc[x]) + (0.002 * clayPerc[x]) - (0.032 * BDg_cm3[x]) + 0.234
 
+                    outValues = [WC_1kPa, WC_3kPa, WC_6kPa, WC_10kPa, WC_20kPa, WC_33kPa, WC_100kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     WC_1kPaArray.append(WC_1kPa)
                     WC_3kPaArray.append(WC_3kPa)
                     WC_6kPaArray.append(WC_6kPa)
@@ -207,6 +210,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_500kPa = 0.0473 - (0.004 * sandPerc[x])  + (0.0042 * clayPerc[x])
                     WC_1000kPa = 0.0035 + (0.0045 * clayPerc[x])
                     WC_1500kPa = 0.0071 + (0.0044 * clayPerc[x])
+
+                    outValues = [WC_10kPa, WC_33kPa, WC_100kPa, WC_300kPa, WC_500kPa, WC_1000kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
 
                     WC_10kPaArray.append(WC_10kPa)
                     WC_33kPaArray.append(WC_33kPa)
@@ -317,6 +323,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_700kPa = 0.0216 + (0.0006 * siltPerc[x]) + (0.0050 * clayPerc[x]) + (0.0167 * (carbPerc[x] * float(carbonConFactor)))
                     WC_1000kPa = 0.0205 + (0.0005 * siltPerc[x]) + (0.0049 * clayPerc[x]) + (0.0154 * (carbPerc[x] * float(carbonConFactor)))
                     WC_1500kPa = 0.026 + (0.005 * clayPerc[x]) + (0.0158 * (carbPerc[x] * float(carbonConFactor)))
+                    
+                    outValues = [WC_4kPa, WC_7kPa, WC_10kPa, WC_20kPa, WC_33kPa, WC_60kPa, WC_100kPa, WC_200kPa, WC_400kPa, WC_700kPa, WC_1000kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
 
                     WC_4kPaArray.append(WC_4kPa)
                     WC_7kPaArray.append(WC_7kPa)
@@ -414,8 +423,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     A = math.exp(-4.396 - (0.0715 * clayPerc[x]) - (4.88 * 10**(-4) * sandPerc[x]**2) - (4.285 * 10**(-5) * sandPerc[x]**2 * clayPerc[x])) * 100
                     B = - 3.14 - 2.22 * 10**(-3) * clayPerc[x]**2 - (3.484 * 10**(-5) * sandPerc[x]**2 * clayPerc[x])
 
-                    WC_10kPa = math.exp((2.302 - math.log(A)) / float(B))
-                    
+                    WC_10kPa = math.exp((2.302 - math.log(A)) / float(B))                    
                     WC_33kPa = math.exp((math.log(33.0) - math.log(A)) / float(B))
                     WC_100kPa = math.exp((math.log(100.0) - math.log(A)) / float(B))
                     WC_200kPa = math.exp((math.log(200.0) - math.log(A)) / float(B))
@@ -423,6 +431,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_1500kPa = math.exp((math.log(1500.0)-  math.log(A)) / float(B))
 
                     K_sat = 10.0008 * (math.exp (12.012 - (0.0755 * sandPerc[x]) + ((- 3.895 + (0.03671 * sandPerc[x]) - (0.1103 * clayPerc[x]) + (8.7546 * 10**(-4) * clayPerc[x]**2))/(0.332 - (7.251 * 10**(-4) * sandPerc[x]) + (0.1276 * math.log(clayPerc[x], 10.0))))))
+
+                    outValues = [WC_10kPa, WC_33kPa, WC_100kPa, WC_200kPa, WC_400kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
 
                     WC_0kPaArray.append(WC_0kPa)
                     WC_10kPaArray.append(WC_10kPa)
@@ -521,6 +532,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_200kPa = (8.7 + (0.45 * clayPerc[x]) + (0.11 * siltPerc[x]) + (1.03 * carbPerc[x] * float(carbonConFactor))) *10**(-2)
                     WC_1500kPa = (2.94 + (0.83 * clayPerc[x]) - (0.0054 * (clayPerc[x]**2))) * 10**(-2)
 
+                    outValues = [WC_5kPa, WC_10kPa, WC_33kPa, WC_200kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     WC_5kPaArray.append(WC_5kPa)
                     WC_10kPaArray.append(WC_10kPa)
                     WC_33kPaArray.append(WC_33kPa)
@@ -609,6 +623,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_200kPa = (7.57 + (0.48 * clayPerc[x]) + (0.11 * siltPerc[x])) * 10**(-2)
                     WC_1500kPa = (1.48 + (0.84 * clayPerc[x]) - (0.0054 * clayPerc[x]**2)) * 10**(-2)
                     
+                    outValues = [WC_5kPa, WC_10kPa, WC_33kPa, WC_200kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     WC_5kPaArray.append(WC_5kPa)
                     WC_10kPaArray.append(WC_10kPa)
                     WC_33kPaArray.append(WC_33kPa)
@@ -712,6 +729,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_700kPa = (0.214 * 10**(-3) * sandPerc[x]) + (1.538 * 10**(-3) * siltPerc[x]) + (5.908 * 10**(-3) * clayPerc[x]) + (2.855 * 10**(-3) * carbPerc[x]*float(carbonConFactor)) + (1.53 * 10**(-2) * BDg_cm3[x])
                     WC_1000kPa = (0.076 * 10**(-3) * sandPerc[x]) + (1.334 * 10**(-3) * siltPerc[x]) + (5.802 * 10**(-3) * clayPerc[x]) + (2.653 * 10**(-3) * carbPerc[x]*float(carbonConFactor)) + (2.145 * 10**(-2) * BDg_cm3[x])
                     WC_1500kPa = (-0.059 * 10**(-3) * sandPerc[x]) + (1.142 * 10**(-3) * siltPerc[x]) + (5.766 * 10**(-3) * clayPerc[x]) + (2.228 * 10**(-3) * carbPerc[x]*float(carbonConFactor)) + (2.671 * 10**(-2) * BDg_cm3[x])
+
+                    outValues = [WC_4kPa, WC_7kPa, WC_10kPa, WC_20kPa, WC_33kPa, WC_60kPa, WC_100kPa, WC_200kPa, WC_400kPa, WC_700kPa, WC_1000kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
 
                     WC_4kPaArray.append(WC_4kPa)
                     WC_7kPaArray.append(WC_7kPa)
@@ -828,6 +848,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_250kPa = ((0.4611 * clayPerc[x]) + (0.2390 * siltPerc[x]) + (1.5742 * carbPerc[x] * float(carbonConFactor)))*10**(-2)
                     WC_1500kPa = ((0.3624 * clayPerc[x]) + (0.1170 * siltPerc[x]) + (1.6054 * carbPerc[x] * float(carbonConFactor)))*10**(-2)
 
+                    outValues = [WC_sat, WC_1kPa, WC_3kPa, WC_5kPa, WC_10kPa, WC_20kPa, WC_33kPa, WC_50kPa, WC_250kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     WC_satArray.append(WC_sat)
                     WC_1kPaArray.append(WC_1kPa)
                     WC_3kPaArray.append(WC_3kPa)
@@ -933,6 +956,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_1500tkPa = (-0.00024 * sandPerc[x]) + (0.00487 * clayPerc[x]) + (0.00006 * carbPerc[x]*float(carbonConFactor)) + (0.0000005 * sandPerc[x] * carbPerc[x]*float(carbonConFactor)) - (0.0000013 * clayPerc[x] * carbPerc[x]*float(carbonConFactor)) + (0.0000068 * sandPerc[x] * clayPerc[x]) + 0.031
                     WC_1500kPa = 1.14*WC_1500tkPa - 0.02
 
+                    outValues = [WC_33kPa, WC_sat_33kPa, WC_sat, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     B_SR = (math.log(1500.0) - math.log(33.0)) / (math.log(WC_33kPa) - math.log(WC_1500kPa))
                     lamda_SR = 1.0 / float(B_SR)
                     K_sat = 1930.0 * ((WC_sat - WC_33kPa)**(3 - lamda_SR))
@@ -1032,6 +1058,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_33kPa = ((WC_FC * 100) - 3.77)/95
                     WC_1500kPa = (-4.19 + (0.19 * siltPerc[x]) + (0.39 * clayPerc[x]) + (0.9 * carbPerc[x]*float(carbonConFactor))) * BDg_cm3[x] * 10**(-2)
 
+                    outValues = [WC_FC, WC_10kPa, WC_33kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     WC_FCArray.append(WC_FC)
                     WC_10kPaArray.append(WC_10kPa)
                     WC_33kPaArray.append(WC_33kPa)
@@ -1099,6 +1128,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_33kPa = (0.065 + (0.004 * clayPerc[x])) * BDg_cm3[x] 
                     WC_1500kPa = (0.006 + (0.003 * clayPerc[x])) * BDg_cm3[x] 
 
+                    outValues = [WC_10kPa, WC_33kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     WC_10kPaArray.append(WC_10kPa)
                     WC_33kPaArray.append(WC_33kPa)
                     WC_1500kPaArray.append(WC_1500kPa)
@@ -1161,10 +1193,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
                     warningArray.append(warningFlag)
 
-
                     # Calculate water content using Aina and Periaswamy (1985)- Sand, Clay, BD
                     WC_33kPa = 0.6788 - (0.0055 * sandPerc[x]) - (0.0013 * BDg_cm3[x])
                     WC_1500kPa = 0.00213 + (0.0031 * clayPerc[x])
+
+                    outValues = [WC_33kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
 
                     WC_33kPaArray.append(WC_33kPa)
                     WC_1500kPaArray.append(WC_1500kPa)
@@ -1232,6 +1266,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         WC_33kPa = 0.5784 + (clayPerc[x] * 0.002227) - (BDg_cm3[x] * 0.28438)
 
                     WC_1500kPa = 0.02413 + (clayPerc[x] * 0.00373)
+
+                    outValues = [WC_33kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
 
                     WC_33kPaArray.append(WC_33kPa)
                     WC_1500kPaArray.append(WC_1500kPa)
@@ -1308,6 +1345,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_33kPa =  (3.83 + (0.272 * clayPerc[x]) + (0.212 * siltPerc[x])) * 10**(-2)
                     WC_1500kPa = ((0.334 * clayPerc[x] * BDg_cm3[x]) + (0.104 * siltPerc[x] * BDg_cm3[x])) * 10**(-2)
 
+                    outValues = [WC_10kPa, WC_33kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     WC_10kPaArray.append(WC_10kPa)
                     WC_33kPaArray.append(WC_33kPa)
                     WC_1500kPaArray.append(WC_1500kPa)
@@ -1367,7 +1407,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 warningArray = []
                 WC_satArray = []
                 WC_1kPaArray = []
-                WC_kPaArray = []
+                WC_3_3kPaArray = []
                 WC_6kPaArray = []
                 WC_10kPaArray = []
                 WC_33kPaArray = []
@@ -1386,7 +1426,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     # Calculate water content using Tomasella and Hodnett (1998) - Silt, Clay, OC
                     WC_sat = 0.01 * ((2.24 * carbPerc[x]*float(carbonConFactor)) + (0.298 * siltPerc[x]) + (0.159 * clayPerc[x]) + 37.937)
                     WC_1kPa = 0.01 * ((0.53 * siltPerc[x]) + (0.255 * clayPerc[x]) + 23.839)
-                    WC_kPa = 0.01 * ((0.552 * siltPerc[x]) + (0.262 * clayPerc[x]) + 18.495)
+                    WC_3_3kPa = 0.01 * ((0.552 * siltPerc[x]) + (0.262 * clayPerc[x]) + 18.495)
                     WC_6kPa = 0.01 * ((0.576 * siltPerc[x]) + (0.3 * clayPerc[x]) + 12.333)
                     WC_10kPa = 0.01 * ((0.543 * siltPerc[x]) + (0.321 * clayPerc[x]) + 9.806)
                     WC_33kPa = 0.01 * ((0.426 * siltPerc[x]) + (0.404 * clayPerc[x]) + 4.046)
@@ -1394,9 +1434,12 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_500kPa = 0.01 * ((0.258 * siltPerc[x]) + (0.361 * clayPerc[x]) + 1.567)
                     WC_1500kPa = 0.01 * ((0.15 * siltPerc[x]) + (0.396 * clayPerc[x]) + 0.91)
 
+                    outValues = [WC_sat, WC_1kPa, WC_3_3kPa, WC_6kPa, WC_10kPa, WC_33kPa, WC_100kPa, WC_500kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     WC_satArray.append(WC_sat)
                     WC_1kPaArray.append(WC_1kPa)
-                    WC_kPaArray.append(WC_kPa)
+                    WC_3_3kPaArray.append(WC_3_3kPa)
                     WC_6kPaArray.append(WC_6kPa)
                     WC_10kPaArray.append(WC_10kPa)
                     WC_33kPaArray.append(WC_33kPa)
@@ -1410,7 +1453,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 arcpy.AddField_management(outputShp, "warning", "TEXT")
                 arcpy.AddField_management(outputShp, "WC_sat", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1kPa", "DOUBLE", 10, 6)
-                arcpy.AddField_management(outputShp, "WC_kPa", "DOUBLE", 10, 6)
+                arcpy.AddField_management(outputShp, "WC_3_3kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_6kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
@@ -1418,14 +1461,14 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 arcpy.AddField_management(outputShp, "WC_500kPa", "DOUBLE", 10, 6)
                 arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-                outputFields = ["warning", "WC_sat", "WC_1kPa", "WC_kPa", "WC_6kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_500kPa", "WC_1500kPa"]
+                outputFields = ["warning", "WC_sat", "WC_1kPa", "WC_3_3kPa", "WC_6kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_500kPa", "WC_1500kPa"]
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
                         row[0] = warningArray[recordNum]
                         row[1] = WC_satArray[recordNum]
                         row[2] = WC_1kPaArray[recordNum]
-                        row[3] = WC_kPaArray[recordNum]
+                        row[3] = WC_3_3kPaArray[recordNum]
                         row[4] = WC_6kPaArray[recordNum]
                         row[5] = WC_10kPaArray[recordNum]
                         row[6] = WC_33kPaArray[recordNum]
@@ -1497,6 +1540,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_100kPa = BDg_cm3[x] * (0.102 + (0.23 * 10**(-2) * (clayPerc[x] + siltPerc[x])) - (0.08 * 10**(-2) * (siltPerc[x] + sandPerc[x])) + (1.08 * 10**(-2) * carbPerc[x]*float(carbonConFactor)))
                     WC_500kPa = BDg_cm3[x] * (0.268 - (0.11 * 10**(-2) * siltPerc[x]) - (0.31 * 10**(-2) * sandPerc[x]) + (0.031 * BDg_cm3[x]))
                     WC_1500kPa = BDg_cm3[x] * (-0.04 + (0.15 * 10**(-2) * clayPerc[x]) + (0.17 * 10**(-2) * (clayPerc[x] + siltPerc[x])) + (0.91 * 10**(-2)* carbPerc[x]*float(carbonConFactor)) + (0.026 * BDg_cm3[x]))
+
+                    outValues = [WC_sat, WC_10kPa, WC_33kPa, WC_100kPa, WC_500kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
 
                     WC_satArray.append(WC_sat)
                     WC_10kPaArray.append(WC_10kPa)
@@ -1577,6 +1623,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_33kPa = BDg_cm3[x] * (0.366 - (0.34 * 10**(-2) * sandPerc[x]))
                     WC_1500kPa = BDg_cm3[x] * (0.236 + (0.045 * 10**(-2) * clayPerc[x]) - (0.21 * 10**(-2) * sandPerc[x]))
 
+                    outValues = [WC_10kPa, WC_33kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     WC_10kPaArray.append(WC_10kPa)
                     WC_33kPaArray.append(WC_33kPa)
                     WC_1500kPaArray.append(WC_1500kPa)
@@ -1642,6 +1691,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     # Calculate water content using Botula Manyala (2013) - Sand, Clay, BD
                     WC_33kPa = 0.4193 - (0.0035 * sandPerc[x]) 
                     WC_1500kPa = 0.0841 - (0.00159 * sandPerc[x]) + (0.0021 * clayPerc[x]) + (0.0779 * BDg_cm3[x])
+
+                    outValues = [WC_33kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
 
                     WC_33kPaArray.append(WC_33kPa)
                     WC_1500kPaArray.append(WC_1500kPa)
@@ -1716,6 +1768,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_1000kPa = - 2.488 - (0.01215 * sandPerc[x]) + (0.00750 * siltPerc[x]) + (4.051 * BDg_cm3[x]) - (0.00007 * sandPerc[x]**2) - (0.00016 * sandPerc[x] * siltPerc[x]) + (0.01333 * sandPerc[x] * BDg_cm3[x]) + (0.00002 * siltPerc[x]**2) + (0.00131 * siltPerc[x] * BDg_cm3[x]) - (1.633 * BDg_cm3[x]**2)
                     log.warning('WC_1000kPa is different between Excel and code, unsure')
                     WC_1500kPa = - 1.076 - (0.00234 * sandPerc[x]) - (0.00334 * siltPerc[x]) + (1.920 * BDg_cm3[x]) - (0.00003 * sandPerc[x]**2) + (0.00003 * sandPerc[x] * siltPerc[x]) + (0.00101 * sandPerc[x] * BDg_cm3[x]) + (0.00006 * siltPerc[x]**2) - (0.00077 * siltPerc[x] * BDg_cm3[x]) - (0.666 * BDg_cm3[x]**2)
+
+                    outValues = [WC_33kPa, WC_100kPa, WC_300kPa, WC_500kPa, WC_1000kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
 
                     WC_33kPaArray.append(WC_33kPa)
                     WC_100kPaArray.append(WC_100kPa)
@@ -1802,6 +1857,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_500kPa = (9.4 + (0.32 * clayPerc[x])) * 10**(-2)  
                     WC_1500kPa = (6.2 + (0.33 * clayPerc[x])) * 10**(-2)
 
+                    outValues = [WC_10kPa, WC_30kPa, WC_100kPa, WC_300kPa, WC_500kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
+
                     WC_10kPaArray.append(WC_10kPa)
                     WC_30kPaArray.append(WC_30kPa)
                     WC_100kPaArray.append(WC_100kPa)
@@ -1886,6 +1944,9 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     # Calculate water content using Santra et al. (2018) - Sand, Clay, OC, BD
                     WC_33kPa = (24.98 - (0.205 * sandPerc[x]) + (0.28 * clayPerc[x]) + (0.192 * carbPerc[x]*float(carbonConFactor) * 10)) * BDg_cm3[x] * 10**(-2)
                     WC_1500kPa = (4.341 + (0.435 * clayPerc[x]) - (0.00431 * sandPerc[x] * clayPerc[x]) + (0.00190 * sandPerc[x] * carbPerc[x]*float(carbonConFactor) * 10) + (0.00169 * clayPerc[x] * carbPerc[x]*float(carbonConFactor) * 10)) * BDg_cm3[x] * 10**(-2)
+
+                    outValues = [WC_33kPa, WC_1500kPa]
+                    thresholds.checkNegOutput(outValues, x)
 
                     WC_33kPaArray.append(WC_33kPa)
                     WC_1500kPaArray.append(WC_1500kPa)

@@ -1766,7 +1766,6 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_300kPa  = - 2.029 - (0.00039 * sandPerc[x]) + (0.02393 * siltPerc[x]) + (2.859 * BDg_cm3[x]) - (0.00007 * sandPerc[x]**2) - (0.000178 * sandPerc[x] * siltPerc[x]) + (0.00614 * sandPerc[x] * BDg_cm3[x]) - (0.000150 * siltPerc[x]**2) - (0.00352 * siltPerc[x] * BDg_cm3[x]) - (1.092 * BDg_cm3[x]**2)
                     WC_500kPa = - 1.079 + (0.01539 * sandPerc[x]) + (0.02272 * siltPerc[x]) + (0.961 * BDg_cm3[x]) - (0.00009 * sandPerc[x]**2) - (0.00021 * sandPerc[x] * siltPerc[x]) - (0.00275 * sandPerc[x] * BDg_cm3[x]) - (0.000171 * siltPerc[x]**2) - (0.00146 * siltPerc[x] * BDg_cm3[x]) - (0.287 * BDg_cm3[x]**2)
                     WC_1000kPa = - 2.488 - (0.01215 * sandPerc[x]) + (0.00750 * siltPerc[x]) + (4.051 * BDg_cm3[x]) - (0.00007 * sandPerc[x]**2) - (0.00016 * sandPerc[x] * siltPerc[x]) + (0.01333 * sandPerc[x] * BDg_cm3[x]) + (0.00002 * siltPerc[x]**2) + (0.00131 * siltPerc[x] * BDg_cm3[x]) - (1.633 * BDg_cm3[x]**2)
-                    log.warning('WC_1000kPa is different between Excel and code, unsure')
                     WC_1500kPa = - 1.076 - (0.00234 * sandPerc[x]) - (0.00334 * siltPerc[x]) + (1.920 * BDg_cm3[x]) - (0.00003 * sandPerc[x]**2) + (0.00003 * sandPerc[x] * siltPerc[x]) + (0.00101 * sandPerc[x] * BDg_cm3[x]) + (0.00006 * siltPerc[x]**2) - (0.00077 * siltPerc[x] * BDg_cm3[x]) - (0.666 * BDg_cm3[x]**2)
 
                     outValues = [WC_33kPa, WC_100kPa, WC_300kPa, WC_500kPa, WC_1000kPa, WC_1500kPa]

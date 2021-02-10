@@ -31,6 +31,10 @@ import LUCI_PTFs.tool_classes.c_SoilMoisture as c_SoilMoisture
 refresh_modules(c_SoilMoisture)
 SoilMoisture = c_SoilMoisture.SoilMoisture
 
+import LUCI_PTFs.tool_classes.c_CalcKsat as c_CalcKsat
+refresh_modules(c_CalcKsat)
+CalcKsat = c_CalcKsat.CalcKsat
+
 ##########################
 ### Toolbox definition ###
 ##########################
@@ -40,4 +44,4 @@ class Toolbox(object):
     def __init__(self):
         self.label = u'LUCI PTF v1.0'
         self.alias = u'LUCI PTF v1.0'
-        self.tools = [SoilParam, SoilMoisture]
+        self.tools = [SoilParam, SoilMoisture, CalcKsat]

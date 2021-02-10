@@ -23,16 +23,14 @@ def function(params):
         VGChoice = common.strToBool(pText[6])
         VG = pText[7]
         VGPressures = pText[8]
-        KsatChoice = common.strToBool(pText[9])
-        Ksat = pText[10]
-        MVGChoice =  common.strToBool(pText[11])
-        MVG = pText[12]
-        carbonContent = pText[13]
-        carbonConFactor = pText[14]
+        MVGChoice =  common.strToBool(pText[9])
+        MVG = pText[10]
+        carbonContent = pText[11]
+        carbonConFactor = pText[12]
 
         # Rerun parameter may not present when tool run as part of a batch run tool. If it is not, set rerun to False.
         try:
-            rerun = common.strToBool(pText[15])
+            rerun = common.strToBool(pText[13])
         except IndexError:
             rerun = False
         except Exception:
@@ -164,38 +162,6 @@ def function(params):
             log.error('Invalid PTF option')
             sys.exit()
 
-        # Set saturated hydraulic conductivity option
-        if Ksat == 'Cosby et al. (1984)':
-            KsatOption = 'Cosby_1984'
-
-        elif Ksat == 'Puckett et al. (1985)':
-            KsatOption = 'Puckett_1985'
-
-        elif Ksat == 'Jabro (1992)':
-            KsatOption = 'Jabro_1992'
-
-        elif Ksat == 'Campbell and Shiozawa (1994)':
-            KsatOption = 'CampbellShiozawa_1994'
-
-        elif Ksat == 'Ferrer Julia et al. (2004) - Sand':
-            KsatOption = 'FerrerJulia_2004_1'
-
-        elif Ksat == 'Ferrer Julia et al. (2004) - Sand, clay, OM':
-            KsatOption = 'FerrerJulia_2004_2'
-
-        elif Ksat == 'Ahuja et al. (1989)':
-            KsatOption = 'Ahuja_1989'
-
-        elif Ksat == 'Minasny and McBratney (2000)':
-            KsatOption = 'MinasnyMcBratney_2000'
-
-        elif Ksat == 'Brakensiek et al. (1984)':
-            KsatOption = 'Brakensiek_1984'
-
-        else:
-            log.error('Invalid Ksat option')
-            sys.exit()
-
         # Set Mualem-Van Genuchten choice
         if MVG == "Wosten et al. (1999) topsoil":
             MVGOption = "Wosten_1999_top"
@@ -229,7 +195,7 @@ def function(params):
 
         # Call soil parameterisation function
         SoilParam.function(outputFolder, inputShapefile, PTFChoice, PTFOption,
-                           VGChoice, VGOption, VGPressArray, KsatChoice, KsatOption, MVGChoice, MVGOption,
+                           VGChoice, VGOption, VGPressArray, MVGChoice, MVGOption,
                            carbContent, carbonConFactor, rerun)
 
         log.info("Soil parameterisation operations completed successfully")

@@ -2671,13 +2671,15 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
 
                 # Write the results to output shapefile
                 arcpy.AddField_management(outputShp, "warning", "TEXT")
+                arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["warning"]
+                outputFields = ["warning", "K_sat"]
                 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
                         row[0] = warningArray[recordNum]
+                        row[1] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1               
@@ -2763,13 +2765,15 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
 
                 # Write the results to output shapefile
                 arcpy.AddField_management(outputShp, "warning", "TEXT")
+                arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                outputFields = ["warning"]
+                outputFields = ["warning", "K_sat"]
                 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
                     for row in cursor:
                         row[0] = warningArray[recordNum]
+                        row[1] = K_satArray[recordNum]
 
                         cursor.updateRow(row)
                         recordNum += 1

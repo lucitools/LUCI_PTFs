@@ -97,24 +97,48 @@ def writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGA
             cursor.updateRow(row)
             recordNum += 1
 
-def plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray):
+def plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray, nameArray, textureArray):
     # Create Van Genuchten plots
     import matplotlib.pyplot as plt
     import numpy as np
+
+    # Plot 0: individual plots of pressure on the y-axis and water content on the x-axis
+    for i in range(0, len(record)):
+        outName = str(nameArray[i]) + '.png'
+        outPath = os.path.join(outputFolder, outName)
+        title = 'Van Genuchten plot for ' + str(nameArray[i])
+
+        y = np.linspace(1.0, 100000.0, 100000)
+        x = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * y * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
+        
+        plt.plot(x, y, label=str(nameArray[i]))
+        plt.legend()
+        plt.axhline(y=33.0)
+        plt.axhline(y=0.0)
+        plt.axhline(y=1500.0)
+        plt.yscale('log')
+        plt.title(title)
+        plt.xlabel('Water content')
+        plt.ylabel('kPa')
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created for soil ' + str(nameArray[i]))
 
     # Plot 1: pressure on the y-axis, water content on the x-axis
     outPath = os.path.join(outputFolder, 'plotVG.png')
     title = 'Van Genuchten plots of ' + str(len(record)) + ' records'
 
     y = np.linspace(1.0, 100000.0, 100000)
-    labels = []
+    labels = []    
     for i in range(0, len(record)):
         x = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * y * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
-        plt.plot(x, y)
+        plt.plot(x, y, label=str(nameArray[i]))
 
+    plt.legend(ncol=2, fontsize=12)
     plt.axhline(y=33.0)
     plt.axhline(y=0.0)
     plt.axhline(y=1500.0)
+    plt.xlim([0, 1])
     plt.yscale('log')
     plt.title(title)
     plt.xlabel('Water content')
@@ -131,11 +155,14 @@ def plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n
     labels = []
     for i in range(0, len(record)):
         y = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * x * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
-        plt.plot(x, y)
+        plt.plot(x, y, label=str(nameArray[i]))
 
+    plt.legend(ncol=2, fontsize=12)
     plt.axvline(x=33.0)
     plt.axvline(x=0.0)
     plt.axvline(x=1500.0)
+    plt.xlim([1, 100000.0])
+    plt.ylim([0, 1.0])
     plt.xscale('log')
     plt.title(title)
     plt.ylabel('Water content')
@@ -152,10 +179,13 @@ def plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n
     labels = []
     for i in range(0, len(record)):
         y = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * x * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
-        plt.plot(x, y)
+        plt.plot(x, y, label=str(nameArray[i]))
 
+    plt.legend(ncol=2, fontsize=12)
     plt.axvline(x=33.0)
     plt.axvline(x=0.0)
+    plt.xlim([0, 500.0])
+    plt.ylim([0, 1.0])
     plt.title(title)
     plt.ylabel('Water content')
     plt.xlabel('kPa')
@@ -282,10 +312,30 @@ def writeOutputMVG(outputShp, Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kP
             cursor.updateRow(row)
             recordNum += 1
 
-def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray):
+def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray, nameArray, textureArray):
     # Create Van Genuchten plots
     import matplotlib.pyplot as plt
     import numpy as np
+
+    # Plot 0: individual plots of K(h) on the y-axis and h on the x-axis
+    for i in range(0, len(record)):
+        outName = str(nameArray[i]) + '.png'
+        outPath = os.path.join(outputFolder, outName)
+        title = 'Mualem-Van Genuchten plot for ' + str(nameArray[i])
+
+        x = np.linspace(1.0, 15000.0, 100000)
+        y = K_satArray[i] * (((((1.0 + (alpha_VGArray[i] * x)**n_VGArray[i])**m_VGArray[i]) - (alpha_VGArray[i] * x)**(n_VGArray[i] - 1.0))**2.0) / (((1.0 + (alpha_VGArray[i] * x)**n_VGArray[i]))**(m_VGArray[i] * (l_MvGArray[i] + 2.0))))
+        
+        plt.plot(x, y, label=str(nameArray[i]))
+        plt.legend()
+        plt.yscale('log')
+        plt.xscale('log')
+        plt.title(title)
+        plt.xlabel('kPa')
+        plt.ylabel('K(h)')
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created for soil ' + str(nameArray[i]))
 
     # Plot 1: K(h) on the y-axis, h on the x-axis
     outPath = os.path.join(outputFolder, 'plotMVG.png')
@@ -295,16 +345,15 @@ def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArra
     labels = []
     for i in range(0, len(record)):
         y = K_satArray[i] * (((((1.0 + (alpha_VGArray[i] * x)**n_VGArray[i])**m_VGArray[i]) - (alpha_VGArray[i] * x)**(n_VGArray[i] - 1.0))**2.0) / (((1.0 + (alpha_VGArray[i] * x)**n_VGArray[i]))**(m_VGArray[i] * (l_MvGArray[i] + 2.0))))
-        plt.plot(x, y)
+        plt.plot(x, y, label=str(nameArray[i]))
 
-    # plt.axvline(x=33.0)
-    # plt.axvline(x=0.0)
-    # plt.axvline(x=1500.0)
     plt.yscale('log')
     plt.xscale('log')
     plt.title(title)
     plt.ylabel('k(h)')
     plt.xlabel('kPa')
+    plt.legend(ncol=2, fontsize=12)
+    plt.xlim([1, 1500000])
     plt.savefig(outPath, transparent=False)
     plt.close()
     log.info('Plot created')
@@ -325,16 +374,16 @@ def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArra
             thetaHArray.append(thetaH)
 
             Ktheta = K_satArray[i] * (((thetaH - WC_residualArray[i]) / float(WC_satArray[i] - WC_residualArray[i]))**l_MvGArray[i]) * (1.0 - (1.0 - ((thetaH - WC_residualArray[i]) / float(WC_satArray[i] - WC_residualArray[i]))**(1.0/m_VGArray[i]))**m_VGArray[i])**2.0
-            kthetaArray.append(Ktheta)
-            
+            kthetaArray.append(Ktheta)            
 
-        plt.plot(thetaHArray, kthetaArray)
+        plt.plot(thetaHArray, kthetaArray, label=str(nameArray[i]))
 
     plt.title(title)
     plt.yscale('log')
-    # plt.xscale('log')
     plt.ylabel('k(theta)')
     plt.xlabel('theta(h)')
+    plt.legend(ncol=2, fontsize=12)
+    plt.xlim([0, 1])
     plt.savefig(outPath2, transparent=False)
     plt.close()
     log.info('Plot created')
@@ -357,13 +406,15 @@ def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArra
             Ktheta = K_satArray[i] * (((thetaH - WC_residualArray[i]) / float(WC_satArray[i] - WC_residualArray[i]))**l_MvGArray[i]) * (1.0 - (1.0 - ((thetaH - WC_residualArray[i]) / float(WC_satArray[i] - WC_residualArray[i]))**(1.0/m_VGArray[i]))**m_VGArray[i])**2.0
             kthetaArray.append(Ktheta)
             
-        plt.plot(pressureVal, kthetaArray)
+        plt.plot(pressureVal, kthetaArray, label=str(nameArray[i]))
 
     plt.title(title)
     plt.yscale('log')
     plt.xscale('log')
     plt.ylabel('k(theta)')
     plt.xlabel('h (kPa)')
+    plt.legend(ncol=2, fontsize=12)
+    plt.xlim([1, 1500000])
     plt.savefig(outPath3, transparent=False)
     plt.close()
     log.info('Plot created')

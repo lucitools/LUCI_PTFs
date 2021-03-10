@@ -1995,10 +1995,10 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 # Requirements: sand, silt, clay, OM, and BD
 
                 if carbContent == 'OC':
-                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OC", "BD"]                    
+                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OC", "BD", "LUCIname", "texture"]
 
                 elif carbContent == 'OM':
-                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OM", "BD"]
+                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OM", "BD", "LUCIname", "texture"]
                     carbonConFactor = 1.0
 
                 checkInputFields(reqFields, inputShp)
@@ -2010,6 +2010,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 clayPerc = []
                 carbPerc = []
                 BDg_cm3 = []
+                nameArray = []
+                textureArray = []
 
                 with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
                     for row in searchCursor:
@@ -2019,6 +2021,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         clay = row[3]
                         carbon = row[4]
                         BD = row[5]
+                        name = row[6]
+                        texture = row[7]
 
                         record.append(objectID)
                         sandPerc.append(sand)
@@ -2026,6 +2030,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         clayPerc.append(clay)
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
+                        nameArray.append(name)
+                        textureArray.append(texture)
 
                 K_satArray = []
                 warningArray = []
@@ -2081,7 +2087,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     K_satArray.append(K_sat)
 
                 # Create plots
-                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray, nameArray, textureArray)
 
                 # Write VG parameter results to output shapefile
                 vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
@@ -2115,11 +2121,11 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 # Requirements: sand, clay, OC, and BD
 
                 if carbContent == 'OC':
-                    reqFields = ["OBJECTID", "Sand", "Clay", "OC", "BD"]                    
+                    reqFields = ["OBJECTID", "Sand", "Clay", "OC", "BD", "LUCIname", "texture"]                    
                     carbonConFactor = 1.0
 
                 elif carbContent == 'OM':
-                    reqFields = ["OBJECTID", "Sand", "Clay", "OM", "BD"]
+                    reqFields = ["OBJECTID", "Sand", "Clay", "OM", "BD", "LUCIname", "texture"]
                     
                 checkInputFields(reqFields, inputShp)
 
@@ -2129,6 +2135,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 clayPerc = []
                 carbPerc = []
                 BDg_cm3 = []
+                nameArray = []
+                textureArray = []
 
                 with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
                     for row in searchCursor:
@@ -2137,12 +2145,16 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         clay = row[2]
                         carbon = row[3]
                         BD = row[4]
+                        name = row[5]
+                        texture = row[6]
 
                         record.append(objectID)
                         sandPerc.append(sand)
                         clayPerc.append(clay)
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
+                        nameArray.append(name)
+                        textureArray.append(texture)
 
                 warningArray = []
                 WC_satArray = []
@@ -2176,7 +2188,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Create plots
-                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray, nameArray, textureArray)
 
                 # Write VG parameter results to output shapefile
                 vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
@@ -2203,7 +2215,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 log.info("Calculating van Genuchten parameters using Zacharias and Wessolek (2007)")
 
                 # Requirements: Sand, clay, and BD
-                reqFields = ["OBJECTID", "Sand", "Clay", "BD"]
+                reqFields = ["OBJECTID", "Sand", "Clay", "BD", "LUCIname", "texture"]
                 checkInputFields(reqFields, inputShp)
 
                 # Retrieve info from input
@@ -2211,6 +2223,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 sandPerc = []
                 clayPerc = []
                 BDg_cm3 = []
+                nameArray = []
+                textureArray = []
 
                 with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
                     for row in searchCursor:
@@ -2218,11 +2232,15 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         sand = row[1]
                         clay = row[2]                        
                         BD = row[3]
+                        name = row[4]
+                        texture = row[5]
 
                         record.append(objectID)
                         sandPerc.append(sand)
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
+                        nameArray.append(name)
+                        textureArray.append(texture)
 
                 warningArray = []
                 WC_satArray = []
@@ -2263,7 +2281,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Create plots
-                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray, nameArray, textureArray)
 
                 # Write VG parameter results to output shapefile
                 vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
@@ -2292,11 +2310,11 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 # Requirements: sand, clay, OC, and BD
 
                 if carbContent == 'OC':
-                    reqFields = ["OBJECTID", "Sand", "Clay", "OC", "BD"]                    
+                    reqFields = ["OBJECTID", "Sand", "Clay", "OC", "BD", "LUCIname", "texture"]
                     carbonConFactor = 1.0
 
                 elif carbContent == 'OM':
-                    reqFields = ["OBJECTID", "Sand", "Clay", "OM", "BD"]
+                    reqFields = ["OBJECTID", "Sand", "Clay", "OM", "BD", "LUCIname", "texture"]
                     
                 checkInputFields(reqFields, inputShp)
 
@@ -2306,6 +2324,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 clayPerc = []
                 carbPerc = []
                 BDg_cm3 = []
+                nameArray = []
+                textureArray = []
 
                 with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
                     for row in searchCursor:
@@ -2314,12 +2334,16 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         clay = row[2]
                         carbon = row[3]
                         BD = row[4]
+                        name = row[5]
+                        texture = row[6]
 
                         record.append(objectID)
                         sandPerc.append(sand)
                         clayPerc.append(clay)
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
+                        nameArray.append(name)
+                        textureArray.append(texture)
 
                 warningArray = []
                 WC_satArray = []
@@ -2353,7 +2377,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Create plots
-                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray, nameArray, textureArray)
 
                 # Write VG parameter results to output shapefile
                 vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
@@ -2380,7 +2404,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 log.info("Calculating van Genuchten parameters using Dashtaki et al. (2010)")
 
                 # Requirements: Sand, clay, and BD
-                reqFields = ["OBJECTID", "Sand", "Clay", "BD"]
+                reqFields = ["OBJECTID", "Sand", "Clay", "BD", "LUCIname", "texture"]
                 checkInputFields(reqFields, inputShp)
 
                 # Retrieve info from input
@@ -2388,6 +2412,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 sandPerc = []
                 clayPerc = []
                 BDg_cm3 = []
+                nameArray = []
+                textureArray = []
 
                 with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
                     for row in searchCursor:
@@ -2395,11 +2421,15 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         sand = row[1]
                         clay = row[2]
                         BD = row[3]
+                        name = row[4]
+                        texture = row[5]
 
                         record.append(objectID)
                         sandPerc.append(sand)
                         clayPerc.append(clay)
                         BDg_cm3.append(BD)
+                        nameArray.append(name)
+                        textureArray.append(texture)
 
                 warningArray = []
                 WC_satArray = []
@@ -2433,7 +2463,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Create plots
-                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray, nameArray, textureArray)
 
                 # Write VG parameter results to output shapefile
                 vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
@@ -2462,11 +2492,11 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
 
                 # Requirements: Sand, Silt, Clay, OC, BD, CEC, pH
                 if carbContent == 'OC':
-                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OC", "BD", "CEC", "pH"]                    
+                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OC", "BD", "CEC", "pH", "LUCIname", "texture"]
                     carbonConFactor = 1.0
 
                 elif carbContent == 'OM':
-                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OC", "BD", "CEC", "pH"]
+                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OC", "BD", "CEC", "pH", "LUCIname", "texture"]
                     
                 checkInputFields(reqFields, inputShp)
 
@@ -2479,6 +2509,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 BDg_cm3 = []
                 CECcmol_kg = []
                 pH = []
+                nameArray = []
+                textureArray = []
 
                 with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
                     for row in searchCursor:
@@ -2490,6 +2522,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         BD = row[5]
                         CEC = row[6]
                         pHValue = row[7]
+                        name = row[8]
+                        texture = row[9]
 
                         record.append(objectID)
                         sandPerc.append(sand)
@@ -2499,6 +2533,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         BDg_cm3.append(BD)
                         CECcmol_kg.append(CEC)
                         pH.append(pHValue)
+                        nameArray.append(name)
+                        textureArray.append(texture)
 
                 warningArray = []
                 WC_satArray = []
@@ -2533,7 +2569,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                     WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray = vanGenuchten.calcVG(WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
 
                 # Create plots
-                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
+                vanGenuchten.plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray, nameArray, textureArray)
 
                 # Write VG parameter results to output shapefile
                 vanGenuchten.writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGArray, m_VGArray)
@@ -2573,11 +2609,11 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
 
                 # Requirements: silt, clay, OM, and BD
                 if carbContent == 'OC':
-                    reqFields = ["OBJECTID", "Silt", "Clay", "OC", "BD"]
+                    reqFields = ["OBJECTID", "Silt", "Clay", "OC", "BD", "LUCIname", "texture"]
                     carbonConFactor = 1.724
 
                 elif carbContent == 'OM':
-                    reqFields = ["OBJECTID", "Silt", "Clay", "OM", "BD"]
+                    reqFields = ["OBJECTID", "Silt", "Clay", "OM", "BD", "LUCIname", "texture"]
                     carbonConFactor = 1.0
 
                 checkInputFields(reqFields, inputShp)
@@ -2588,6 +2624,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 clayPerc = []
                 carbPerc = []
                 BDg_cm3 = []
+                nameArray = []
+                textureArray = []
 
                 with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
                     for row in searchCursor:
@@ -2596,12 +2634,16 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         clay = row[2]
                         carbon = row[3]
                         BD = row[4]
+                        name = row[5]
+                        texture = row[6]
 
                         record.append(objectID)
                         siltPerc.append(silt)
                         clayPerc.append(clay)
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
+                        nameArray.append(name)
+                        textureArray.append(texture)
 
                 warningArray = []
                 K_satArray = []
@@ -2667,7 +2709,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 vanGenuchten.writeOutputMVG(outputShp, Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kPaArray, Se_100kPaArray, Se_1500kPaArray, K_Se_1kPaArray, K_Se_3kPaArray, K_Se_10kPaArray, K_Se_33kPaArray, K_Se_100kPaArray, K_Se_1500kPaArray)
 
                 # Plotting functions
-                vanGenuchten.plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray)
+                vanGenuchten.plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray, nameArray, textureArray)
 
                 # Write the results to output shapefile
                 arcpy.AddField_management(outputShp, "warning", "TEXT")
@@ -2690,11 +2732,11 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
 
                 # Calculate Mualem Van Genuchten parameters using Weynants et al. (2009) - Sand, Silt, Clay, OC, BD
                 if carbContent == 'OC':
-                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OC", "BD"]
+                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OC", "BD", "LUCIname", "texture"]
                     carbonConFactor = 1.0
 
                 elif carbContent == 'OM':
-                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OM", "BD"]
+                    reqFields = ["OBJECTID", "Sand", "Silt", "Clay", "OM", "BD", "LUCIname", "texture"]
                     carbonConFactor = 0.58
 
                 checkInputFields(reqFields, inputShp)
@@ -2706,6 +2748,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 clayPerc = []
                 carbPerc = []
                 BDg_cm3 = []
+                nameArray = []
+                textureArray = []
 
                 with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
                     for row in searchCursor:
@@ -2715,6 +2759,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         clay = row[3]
                         carbon = row[4]
                         BD = row[5]
+                        name = row[6]
+                        texture = row[7]
 
                         record.append(objectID)
                         sandPerc.append(sand)
@@ -2722,6 +2768,8 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                         clayPerc.append(clay)
                         carbPerc.append(carbon)
                         BDg_cm3.append(BD)
+                        nameArray.append(name)
+                        textureArray.append(texture)
 
                 warningArray = []
                 K_satArray = []
@@ -2761,7 +2809,7 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 vanGenuchten.writeOutputMVG(outputShp, Se_1kPaArray, Se_3kPaArray, Se_10kPaArray, Se_33kPaArray, Se_100kPaArray, Se_1500kPaArray, K_Se_1kPaArray, K_Se_3kPaArray, K_Se_10kPaArray, K_Se_33kPaArray, K_Se_100kPaArray, K_Se_1500kPaArray)
 
                 # Plotting functions
-                vanGenuchten.plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray)
+                vanGenuchten.plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray, nameArray, textureArray)
 
                 # Write the results to output shapefile
                 arcpy.AddField_management(outputShp, "warning", "TEXT")

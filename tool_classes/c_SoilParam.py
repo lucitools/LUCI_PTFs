@@ -131,7 +131,7 @@ class SoilParam(object):
         # 6 Calculate_VG
         param = arcpy.Parameter()
         param.name = u'Calculate_VG'
-        param.displayName = u'Estimate soil moisture content and generate soil moisture retention curve using parametric-PTFs for van Genuchten model'
+        param.displayName = u'Estimate soil moisture content and generate soil moisture retention curve using PTFs for van Genuchten model'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'Boolean'
@@ -141,7 +141,7 @@ class SoilParam(object):
         # 7 VG_of_choice
         param = arcpy.Parameter()
         param.name = u'VG_of_choice'
-        param.displayName = u'Parametric-PTFs of choice for van Genuchten model'
+        param.displayName = u'PTFs of choice for van Genuchten model'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
@@ -165,7 +165,7 @@ class SoilParam(object):
         # 9 Calculate_MVG
         param = arcpy.Parameter()
         param.name = u'Calculate_MVG'
-        param.displayName = u'Estimate unsaturated hydraulic conductivity and generate hydraulic conductivity curve using parametric-PTFs for Mualem van Genuchten model'
+        param.displayName = u'Estimate unsaturated hydraulic conductivity and generate hydraulic conductivity curve using PTFs for Mualem van Genuchten model'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'Boolean'

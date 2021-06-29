@@ -101,6 +101,9 @@ def function(params):
             else:
                 log.info('Brakensiek et al. (1984) will use input water content at saturation')
 
+        elif Ksat == 'Wosten et al. (1999)':
+            KsatOption = 'Wosten_1999'
+
         else:
             log.error('Invalid Ksat option')
             sys.exit()

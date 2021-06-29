@@ -91,7 +91,8 @@ class CalcKsat(object):
                              u'Ferrer Julia et al. (2004) - Sand',
                              u'Ferrer Julia et al. (2004) - Sand, clay, OM',
                              u'Brakensiek et al. (1984)',
-                             u'Ahuja et al. (1989)', u'Minasny and McBratney (2000)']
+                             u'Ahuja et al. (1989)', u'Minasny and McBratney (2000)',
+                             u'Wosten et al. (1999)']
         params.append(param)
 
         # 5 Field_FieldCapacity

@@ -523,6 +523,72 @@ def function(outputFolder, inputShp, KsatOption, fieldFC, fieldSat, carbContent,
 
             log.info("Results written to the output shapefile inside the output folder")
 
+        elif KsatOption == 'Wosten_1999':
+            log.info("Calculating van Genuchten parameters using Wosten et al. (1999)")
+
+            # Requirements: silt, clay, OM, and BD
+
+            if carbContent == 'OC':
+                reqFields = ["OBJECTID", "Silt", "Clay", "OC", "BD"]
+
+            elif carbContent == 'OM':
+                reqFields = ["OBJECTID", "Silt", "Clay", "OM", "BD"]
+                carbonConFactor = 1.0
+
+            checkInputFields(reqFields, inputShp)
+
+            # Retrieve info from input
+            record = []
+            siltPerc = []
+            clayPerc = []
+            carbPerc = []
+            BDg_cm3 = []
+
+            with arcpy.da.SearchCursor(inputShp, reqFields) as searchCursor:
+                for row in searchCursor:
+                    objectID = row[0]
+                    silt = row[1]
+                    clay = row[2]
+                    carbon = row[3]
+                    BD = row[4]
+
+                    record.append(objectID)
+                    siltPerc.append(silt)
+                    clayPerc.append(clay)
+                    carbPerc.append(carbon)
+                    BDg_cm3.append(BD)
+
+            K_satArray = []
+            warningArray = []
+
+            for x in range(0, len(record)):
+
+                # Data checks
+                warningFlag = thresholds.checkCarbon(carbPerc[x], carbContent, record[x])
+                warningFlag = thresholds.checkValue("Bulk density", BDg_cm3[x], record[x])
+                warningArray.append(warningFlag)
+
+                # Calculate saturated hydraulic conductivity
+                K_sat = (10.0 / 24.0) * math.exp(7.755 + (0.0352 * siltPerc[x]) + (0.93 * 1) - (0.976 * BDg_cm3[x]**2) - (0.000484 * clayPerc[x]**2) - (0.000322 * siltPerc[x]**2) + (0.001 * siltPerc[x]**(-1)) - (0.0748 * (carbPerc[x]*float(carbonConFactor))**(-1)) - (0.643 * math.log(siltPerc[x])) - (0.0139 * BDg_cm3[x] * clayPerc[x]) - (0.167 * BDg_cm3[x] * carbPerc[x]*float(carbonConFactor)) + (0.0298 * 1 * clayPerc[x]) - (0.03305 * 1 * siltPerc[x]))
+                K_satArray.append(K_sat)
+
+            # Write results to output shapefile
+            arcpy.AddField_management(outputShp, "warning", "TEXT")
+            arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
+
+            outputFields = ["warning", "K_sat"]
+            
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                for row in cursor:
+                    row[0] = warningArray[recordNum]
+                    row[1] = K_satArray[recordNum]
+
+                    cursor.updateRow(row)
+                    recordNum += 1
+
+            log.info("Results written to the output shapefile inside the output folder")
+
         else:
             log.error('Ksat option not recognised')
             log.error('Please choose a Ksat option from the drop down menu')

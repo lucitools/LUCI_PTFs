@@ -1,5 +1,6 @@
 import arcpy
 import os
+import sys
 
 import LUCI_PTFs.lib.log as log
 import LUCI_PTFs.lib.common as common
@@ -197,6 +198,10 @@ def function(params):
         SoilParam.function(outputFolder, inputShapefile, PTFChoice, PTFOption,
                            VGChoice, VGOption, VGPressArray, MVGChoice, MVGOption,
                            carbContent, carbonConFactor, rerun)
+
+        # Loading shapefile automatically
+        soilParamOut = os.path.join(outputFolder, "soilParam.shp")
+        arcpy.SetParameter(14, soilParamOut)
 
         log.info("Soil parameterisation operations completed successfully")
 

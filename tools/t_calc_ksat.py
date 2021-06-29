@@ -119,6 +119,10 @@ def function(params):
         CalcKsat.function(outputFolder, inputShapefile, KsatOption, fieldFC, fieldSat,
                           carbContent, carbonConFactor)
 
+        # Set output filename for display
+        KsatOut = os.path.join(outputFolder, "Ksat.shp")
+        arcpy.SetParameter(9, KsatOut)
+
         log.info("Saturated hydraulic conductivity operations completed successfully")
 
     except Exception:

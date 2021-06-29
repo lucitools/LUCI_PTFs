@@ -62,6 +62,10 @@ def function(params):
                               RAWoption, RAWfrac, fieldCrit,
                               RDchoice, rootingDepth)
 
+        # Set output filename for display
+        soilMoistureOut = os.path.join(outputFolder, "soilMoisture.shp")
+        arcpy.SetParameter(12, soilMoistureOut)
+
         log.info("Soil moisture operations completed successfully")
 
     except Exception:

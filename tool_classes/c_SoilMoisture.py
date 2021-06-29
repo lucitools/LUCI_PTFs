@@ -155,6 +155,15 @@ class SoilMoisture(object):
         param.value = u'100'
         params.append(param)
 
+        # 12 Output_Layer_SoilMoisture
+        param = arcpy.Parameter()
+        param.name = u'Output_Layer_SoilMoisture'
+        param.displayName = u'Soil Moisture'
+        param.parameterType = 'Derived'
+        param.direction = 'Output'
+        param.datatype = u'Feature Layer'
+        params.append(param)
+
         return params
 
     def isLicensed(self):

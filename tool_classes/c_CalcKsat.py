@@ -133,6 +133,15 @@ class CalcKsat(object):
         param.value = u'1.724'
         params.append(param)
 
+        # 9 Output_Layer_Ksat
+        param = arcpy.Parameter()
+        param.name = u'Output_Layer_Ksat'
+        param.displayName = u'Ksat'
+        param.parameterType = 'Derived'
+        param.direction = 'Output'
+        param.datatype = u'Feature Layer'
+        params.append(param)
+
         return params
 
     def isLicensed(self):

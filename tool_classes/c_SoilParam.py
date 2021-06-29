@@ -215,6 +215,15 @@ class SoilParam(object):
         param.value = u'False'
         params.append(param)
 
+        # 14 Output_Layer_SoilParam
+        param = arcpy.Parameter()
+        param.name = u'Output_Layer_SoilParam'
+        param.displayName = u'Soil'
+        param.parameterType = 'Derived'
+        param.direction = 'Output'
+        param.datatype = u'Feature Layer'
+        params.append(param)
+
         return params
 
     def isLicensed(self):

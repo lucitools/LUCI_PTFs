@@ -10,6 +10,49 @@ import LUCI_PTFs.lib.log as log
 from LUCI_PTFs.lib.refresh_modules import refresh_modules
 refresh_modules([log])
 
+def calcVGfxn(pressure, theta_res, theta_sat, alpha, n, m):
+    
+    # Function to calculate the water content at a given pressure
+    # or vector/range of pressures
+    # Pressure is normally expected in kPa
+    # Unless VG parameters have been derived using moisture content vs pressure data
+    # at different units
+
+    vg_WC = theta_res + ((theta_sat - theta_res) / ((1.0 + ((alpha * pressure) ** n))) ** m)
+    
+    # Return WC    
+    return vg_WC
+
+def calcMVGfxn(pressure, K_sat, alpha, n, m, l):
+
+    # Calculate Mualem-van Genuchten
+
+    # Calc Se
+    Se_MVG = 1.0 / float((1.0 + (alpha * pressure) ** n) ** m)
+
+    # Calc K_Se
+    K_Se_MVG = K_sat * Se_MVG ** l * (1.0 - (1.0 - Se_MVG ** (1.0 / m)) ** m) ** 2.0
+
+    return Se_MVG, K_Se_MVG
+
+def calcKhfxn(pressure, K_sat, alpha, n, m, l):
+
+    # Calculate K(h)
+    Kh = K_sat * (((((1.0 + (alpha * pressure)**n)**m) - (alpha * pressure)**(n - 1.0))**2.0) / (((1.0 + (alpha * pressure)**n))**(m * (l + 2.0))))
+
+    return Kh
+
+def calcthetaHKfxn(pressure, WC_res, WC_sat, alpha, n, m, K_sat, l):
+
+    # Calculate thetaH and Ktheta for MVG
+    thetaH = calcVGfxn(pressure, WC_res, WC_sat, alpha, n, m)            
+    Ktheta = K_sat * (((thetaH - WC_res) / float(WC_sat - WC_res))**l) * (1.0 - (1.0 - ((thetaH - WC_res) / float(WC_sat - WC_res))**(1.0/m))**m)**2.0
+            
+    arcpy.AddMessage('thetaH: ' + str(thetaH))
+    arcpy.AddMessage('Ktheta: ' + str(Ktheta))
+
+    return thetaH, Ktheta
+
 def calcVG(WC_residual, WC_sat, alpha_VG, n_VG, m_VG):
     # Calculates soil water content using the van Genuchten equation
 
@@ -23,14 +66,14 @@ def calcVG(WC_residual, WC_sat, alpha_VG, n_VG, m_VG):
     WC_1500kPaArray = []
 
     for x in range(0, len(WC_residual)):
-        WC_1kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 10.0) ** n_VG[x]))) ** m_VG[x])
-        WC_3kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 30.0) ** n_VG[x]))) ** m_VG[x])
-        WC_10kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 100.0) ** n_VG[x]))) ** m_VG[x])
-        WC_33kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 330.0) ** n_VG[x]))) ** m_VG[x])
-        WC_100kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 1000.0) ** n_VG[x]))) ** m_VG[x])
-        WC_200kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 2000.0) ** n_VG[x]))) ** m_VG[x])
-        WC_1000kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 10000.0) ** n_VG[x]))) ** m_VG[x])
-        WC_1500kPa = WC_residual[x] + ((WC_sat[x] - WC_residual[x]) / ((1.0 + ((alpha_VG[x] * 15000.0) ** n_VG[x]))) ** m_VG[x])
+        WC_1kPa = calcVGfxn(1.0, WC_residual[x], WC_sat[x], alpha_VG[x], n_VG[x], m_VG[x])        
+        WC_3kPa = calcVGfxn(3.0, WC_residual[x], WC_sat[x], alpha_VG[x], n_VG[x], m_VG[x])
+        WC_10kPa = calcVGfxn(10.0, WC_residual[x], WC_sat[x], alpha_VG[x], n_VG[x], m_VG[x])
+        WC_33kPa = calcVGfxn(33.0, WC_residual[x], WC_sat[x], alpha_VG[x], n_VG[x], m_VG[x])
+        WC_100kPa = calcVGfxn(100.0, WC_residual[x], WC_sat[x], alpha_VG[x], n_VG[x], m_VG[x])
+        WC_200kPa = calcVGfxn(200.0, WC_residual[x], WC_sat[x], alpha_VG[x], n_VG[x], m_VG[x])
+        WC_1000kPa = calcVGfxn(1000.0, WC_residual[x], WC_sat[x], alpha_VG[x], n_VG[x], m_VG[x])
+        WC_1500kPa = calcVGfxn(1500.0, WC_residual[x], WC_sat[x], alpha_VG[x], n_VG[x], m_VG[x])
 
         WC_1kPaArray.append(WC_1kPa)
         WC_3kPaArray.append(WC_3kPa)
@@ -102,16 +145,26 @@ def plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n
     import matplotlib.pyplot as plt
     import numpy as np
 
-    # Plot 0: individual plots of pressure on the y-axis and water content on the x-axis
+    ################################
+    ### Plot 0: individual plots ###
+    ################################
+
+    # Plot 0: pressure on the y-axis and water content on the x-axis
     for i in range(0, len(record)):
         outName = str(nameArray[i]) + '.png'
         outPath = os.path.join(outputFolder, outName)
         title = 'Van Genuchten plot for ' + str(nameArray[i])
 
-        y = np.linspace(1.0, 100000.0, 100000)
-        x = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * y * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
+        # Set pressure vector
+        psi_kPa = np.linspace(0.0, 1500.0, 1500)
+
+        # Calculate WC over that pressure vector
+        vg_WC = calcVGfxn(psi_kPa, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
         
-        plt.plot(x, y, label=str(nameArray[i]))
+        # Convert pressure to cm for plotting purposes
+        psi_cm = 10.0 * (psi_kPa)
+
+        plt.plot(vg_WC, psi_kPa, label=str(nameArray[i]))
         plt.legend()
         plt.axhline(y=33.0)
         plt.axhline(y=0.0)
@@ -119,20 +172,30 @@ def plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n
         plt.yscale('log')
         plt.title(title)
         plt.xlabel('Water content')
-        plt.ylabel('kPa')
+        plt.ylabel('- kPa')
         plt.savefig(outPath, transparent=False)
         plt.close()
         log.info('Plot created for soil ' + str(nameArray[i]))
 
+    #########################################
+    ### Plot 1: one plot with all records ###
+    #########################################
+
     # Plot 1: pressure on the y-axis, water content on the x-axis
     outPath = os.path.join(outputFolder, 'plotVG.png')
-    title = 'Van Genuchten plots of ' + str(len(record)) + ' records'
+    title = 'Van Genuchten plots of ' + str(len(record)) + ' soils'
 
-    y = np.linspace(1.0, 100000.0, 100000)
+    psi_kPa = np.linspace(0.0, 1500.0, 1500)
     labels = []    
     for i in range(0, len(record)):
-        x = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * y * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
-        plt.plot(x, y, label=str(nameArray[i]))
+
+        # Calculate WC for pressure vector
+        vg_WC = calcVGfxn(psi_kPa, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
+        
+        # Convert pressure to cm for plotting
+        psi_cm = 10.0 * psi_kPa
+
+        plt.plot(vg_WC, psi_kPa, label=str(nameArray[i]))
 
     plt.legend(ncol=2, fontsize=12)
     plt.axhline(y=33.0)
@@ -142,53 +205,65 @@ def plotVG(outputFolder, record, WC_residualArray, WC_satArray, alpha_VGArray, n
     plt.yscale('log')
     plt.title(title)
     plt.xlabel('Water content')
-    plt.ylabel('kPa')
+    plt.ylabel('- kPa')
     plt.savefig(outPath, transparent=False)
     plt.close()
     log.info('Plot created')
 
+    #########################################
+    ### Plot 2: one plot with all records ###
+    #########################################
+
     # Plot 2: pressure on the x-axis, WC on the y-axis
     outPath = os.path.join(outputFolder, 'plotVG_WC_yaxis.png')
-    title = 'Van Genuchten plots of ' + str(len(record)) + ' records (water content on y-axis)'
+    title = 'Van Genuchten plots of ' + str(len(record)) + ' soils (water content on y-axis)'
 
-    x = np.linspace(1.0, 2000.0, 10000)
+    # Define pressure vector 
+    psi_kPa = np.linspace(0.0, 1500.0, 1500)
     labels = []
     for i in range(0, len(record)):
-        y = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * x * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
-        plt.plot(x, y, label=str(nameArray[i]))
+
+        # Calculate WC 
+        vg_WC = calcVGfxn(psi_kPa, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
+        
+        plt.plot(psi_kPa, vg_WC, label=str(nameArray[i]))
 
     plt.legend(ncol=2, fontsize=12)
     plt.axvline(x=33.0)
     plt.axvline(x=0.0)
     plt.axvline(x=1500.0)
-    plt.xlim([1, 100000.0])
+    plt.xlim([1, 1000000.0])
     plt.ylim([0, 1.0])
     plt.xscale('log')
     plt.title(title)
     plt.ylabel('Water content')
-    plt.xlabel('kPa')
+    plt.xlabel('- kPa')
     plt.savefig(outPath, transparent=False)
     plt.close()
     log.info('Plot created with water content on the y-axis')
 
+    #########################################
+    ### Plot 3: one plot with all records ###
+    #########################################
+
     # Plot 3: WC on the y-axis zoomed in to 1 to 600 kPa
     outPath = os.path.join(outputFolder, 'plotVG_200kPa.png')
-    title = 'Van Genuchten plots of ' + str(len(record)) + ' records (water content on y-axis)'
+    title = 'Van Genuchten plots of ' + str(len(record)) + ' soils (water content on y-axis)'
 
-    x = np.linspace(1.0, 300.0, 600)
+    psi_kPa = np.linspace(1.0, 300.0, 600)
     labels = []
     for i in range(0, len(record)):
-        y = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / ((1.0 + ((alpha_VGArray[i] * x * 10.0) ** n_VGArray[i]))) ** m_VGArray[i])
-        plt.plot(x, y, label=str(nameArray[i]))
+        vg_WC = calcVGfxn(psi_kPa, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
+        plt.plot(psi_kPa, vg_WC, label=str(nameArray[i]))
 
     plt.legend(ncol=2, fontsize=12)
     plt.axvline(x=33.0)
     plt.axvline(x=0.0)
-    plt.xlim([0, 500.0])
+    plt.xlim([0, 600.0])
     plt.ylim([0, 1.0])
     plt.title(title)
     plt.ylabel('Water content')
-    plt.xlabel('kPa')
+    plt.xlabel('- kPa')
     plt.savefig(outPath, transparent=False)
     plt.close()
     log.info('Plot created with lines for important thresholds')
@@ -201,7 +276,7 @@ def calcPressuresVG(x, WC_residual, WC_sat, alpha_VG, n_VG, m_VG, vgPressures):
 
     for pressure in vgPressures:
 
-        waterContent = WC_residual + ((WC_sat - WC_residual) / ((1.0 + ((alpha_VG * pressure * 10.0) ** n_VG))) ** m_VG)
+        waterContent = calcVGfxn(pressure, WC_residual, WC_sat, alpha_VG, n_VG, m_VG)
         wcValues.append(waterContent)
 
     return wcValues
@@ -241,21 +316,14 @@ def calcMVG(K_sat, alpha_VG, n_VG, m_VG, l_MvG):
     K_Se_1500kPaArray = []
     
     for x in range(0, len(alpha_VG)):
-        # Calculate Se at different pressures
-        Se_1kPa = 1.0 / float((1.0 + (alpha_VG[x] * 10.0) ** n_VG[x]) ** m_VG[x])
-        Se_3kPa = 1.0 / float((1.0 + (alpha_VG[x] * 30.0) ** n_VG[x]) ** m_VG[x])
-        Se_10kPa = 1.0 / float((1.0 + (alpha_VG[x] * 100.0) ** n_VG[x]) ** m_VG[x])
-        Se_33kPa = 1.0 / float((1.0 + (alpha_VG[x] * 330.0) ** n_VG[x]) ** m_VG[x])
-        Se_100kPa = 1.0 / float((1.0 + (alpha_VG[x] * 1000.0) ** n_VG[x]) ** m_VG[x])
-        Se_1500kPa = 1.0 / float((1.0 + (alpha_VG[x] * 15000.0) ** n_VG[x]) ** m_VG[x])
 
-        # Calculate K_Se at different pressures
-        K_Se_1kPa = K_sat[x] * Se_1kPa ** l_MvG[x] * (1.0 - (1.0 - Se_1kPa ** (1.0 / m_VG[x])) ** m_VG[x]) ** 2.0
-        K_Se_3kPa = K_sat[x] * Se_3kPa ** l_MvG[x] * (1.0 - (1.0 - Se_3kPa ** (1.0 / m_VG[x])) ** m_VG[x]) ** 2.0
-        K_Se_10kPa = K_sat[x] * Se_10kPa ** l_MvG[x] * (1.0 - (1.0 - Se_10kPa ** (1.0 / m_VG[x])) ** m_VG[x]) ** 2.0
-        K_Se_33kPa = K_sat[x] * Se_33kPa ** l_MvG[x] * (1.0 - (1.0 - Se_33kPa ** (1.0 / m_VG[x])) ** m_VG[x]) ** 2.0
-        K_Se_100kPa = K_sat[x] * Se_100kPa ** l_MvG[x] * (1.0 - (1.0 - Se_100kPa ** (1.0 / m_VG[x])) ** m_VG[x]) ** 2.0
-        K_Se_1500kPa = K_sat[x] * Se_1500kPa ** l_MvG[x] * (1.0 - (1.0 - Se_1500kPa ** (1.0 / m_VG[x])) ** m_VG[x]) ** 2.0
+        # Calculate Se and K_Se at different pressures
+        Se_1kPa, K_Se_1kPa = calcMVGfxn(1.0, K_sat[x], alpha_VG[x], n_VG[x], m_VG[x], l_MvG[x])
+        Se_3kPa, K_Se_3kPa = calcMVGfxn(3.0, K_sat[x], alpha_VG[x], n_VG[x], m_VG[x], l_MvG[x])
+        Se_10kPa, K_Se_10kPa = calcMVGfxn(10.0, K_sat[x], alpha_VG[x], n_VG[x], m_VG[x], l_MvG[x])
+        Se_33kPa, K_Se_33kPa = calcMVGfxn(33.0, K_sat[x], alpha_VG[x], n_VG[x], m_VG[x], l_MvG[x])
+        Se_100kPa, K_Se_100kPa = calcMVGfxn(100.0, K_sat[x], alpha_VG[x], n_VG[x], m_VG[x], l_MvG[x])
+        Se_1500kPa, K_Se_1500kPa = calcMVGfxn(1500.0, K_sat[x], alpha_VG[x], n_VG[x], m_VG[x], l_MvG[x])
 
         Se_1kPaArray.append(Se_1kPa)
         Se_3kPaArray.append(Se_3kPa)
@@ -317,52 +385,67 @@ def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArra
     import matplotlib.pyplot as plt
     import numpy as np
 
+    ################################
+    ### Plot 0: individual plots ###
+    ################################
+
     # Plot 0: individual plots of K(h) on the y-axis and h on the x-axis
     for i in range(0, len(record)):
-        outName = str(nameArray[i]) + '.png'
+        outName = 'MVG_' + str(nameArray[i]) + '.png'
         outPath = os.path.join(outputFolder, outName)
         title = 'Mualem-Van Genuchten plot for ' + str(nameArray[i])
 
-        x = np.linspace(1.0, 15000.0, 100000)
-        y = K_satArray[i] * (((((1.0 + (alpha_VGArray[i] * x)**n_VGArray[i])**m_VGArray[i]) - (alpha_VGArray[i] * x)**(n_VGArray[i] - 1.0))**2.0) / (((1.0 + (alpha_VGArray[i] * x)**n_VGArray[i]))**(m_VGArray[i] * (l_MvGArray[i] + 2.0))))
+        # h
+        x = np.linspace(0.0, 1500.0, 1500)
+
+        # K(h)
+        y = calcKhfxn(x, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
         
         plt.plot(x, y, label=str(nameArray[i]))
         plt.legend()
         plt.yscale('log')
         plt.xscale('log')
         plt.title(title)
-        plt.xlabel('kPa')
+        plt.xlabel('- kPa')
         plt.ylabel('K(h)')
         plt.savefig(outPath, transparent=False)
         plt.close()
-        log.info('Plot created for soil ' + str(nameArray[i]))
+        log.info('MVG plot created for soil ' + str(nameArray[i]))
+
+    #########################################
+    ### Plot 1: one plot with all records ###
+    #########################################
 
     # Plot 1: K(h) on the y-axis, h on the x-axis
     outPath = os.path.join(outputFolder, 'plotMVG.png')
-    title = 'Mualem-van Genuchten plots of ' + str(len(record)) + ' records'
+    title = 'Mualem-van Genuchten plots of ' + str(len(record)) + ' soils'
 
-    x = np.linspace(1.0, 15000.0, 100000)
+    x = np.linspace(0.0, 1500.0, 1500)
     labels = []
     for i in range(0, len(record)):
-        y = K_satArray[i] * (((((1.0 + (alpha_VGArray[i] * x)**n_VGArray[i])**m_VGArray[i]) - (alpha_VGArray[i] * x)**(n_VGArray[i] - 1.0))**2.0) / (((1.0 + (alpha_VGArray[i] * x)**n_VGArray[i]))**(m_VGArray[i] * (l_MvGArray[i] + 2.0))))
+        y = calcKhfxn(x, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
         plt.plot(x, y, label=str(nameArray[i]))
 
     plt.yscale('log')
     plt.xscale('log')
     plt.title(title)
     plt.ylabel('k(h)')
-    plt.xlabel('kPa')
+    plt.xlabel('- kPa')
     plt.legend(ncol=2, fontsize=12)
-    plt.xlim([1, 1500000])
+    plt.xlim([1, 150000])
     plt.savefig(outPath, transparent=False)
     plt.close()
     log.info('Plot created')
 
+    #########################################
+    ### Plot 2: one plot with all records ###
+    #########################################
+
     # Plot 2: k(theta) vs theta(h)
     outPath2 = os.path.join(outputFolder, 'plotMVG_Ktheta.png')
-    title = 'Mualem-van Genuchten plots of ' + str(len(record)) + ' records'
+    title = 'Mualem-van Genuchten plots of ' + str(len(record)) + ' soils'
 
-    pressureVal = np.linspace(1.0, 15000.0, 10000)
+    pressureVal = np.linspace(0.0, 1500.0, 1500)
     for i in range(0, len(record)):
 
         thetaHArray = []
@@ -370,10 +453,9 @@ def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArra
 
         for j in range(0, len(pressureVal)):
 
-            thetaH = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / float((1.0 + (alpha_VGArray[i] * pressureVal[j])**n_VGArray[i])**m_VGArray[i]))
-            thetaHArray.append(thetaH)
+            thetaH, Ktheta = calcthetaHKfxn(pressureVal, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], K_satArray[i], l_MvGArray[i])
 
-            Ktheta = K_satArray[i] * (((thetaH - WC_residualArray[i]) / float(WC_satArray[i] - WC_residualArray[i]))**l_MvGArray[i]) * (1.0 - (1.0 - ((thetaH - WC_residualArray[i]) / float(WC_satArray[i] - WC_residualArray[i]))**(1.0/m_VGArray[i]))**m_VGArray[i])**2.0
+            thetaHArray.append(thetaH)
             kthetaArray.append(Ktheta)            
 
         plt.plot(thetaHArray, kthetaArray, label=str(nameArray[i]))
@@ -388,11 +470,15 @@ def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArra
     plt.close()
     log.info('Plot created')
 
+    #########################################
+    ### Plot 3: one plot with all records ###
+    #########################################
+
     # Plot 3: k(theta) vs h
     outPath3 = os.path.join(outputFolder, 'plotMVG_Ktheta_h.png')
-    title = 'Mualem-van Genuchten plots of ' + str(len(record)) + ' records'
+    title = 'Mualem-van Genuchten plots of ' + str(len(record)) + ' soils'
 
-    pressureVal = np.linspace(1.0, 15000.0, 10000)
+    pressureVal = np.linspace(1.0, 1500.0, 1500)
     for i in range(0, len(record)):
 
         thetaHArray = []
@@ -400,19 +486,18 @@ def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArra
 
         for j in range(0, len(pressureVal)):
 
-            thetaH = WC_residualArray[i] + ((WC_satArray[i] - WC_residualArray[i]) / float((1.0 + (alpha_VGArray[i] * pressureVal[j])**n_VGArray[i])**m_VGArray[i]))
-            thetaHArray.append(thetaH)
-
-            Ktheta = K_satArray[i] * (((thetaH - WC_residualArray[i]) / float(WC_satArray[i] - WC_residualArray[i]))**l_MvGArray[i]) * (1.0 - (1.0 - ((thetaH - WC_residualArray[i]) / float(WC_satArray[i] - WC_residualArray[i]))**(1.0/m_VGArray[i]))**m_VGArray[i])**2.0
-            kthetaArray.append(Ktheta)
+            thetaH, Ktheta = calcthetaHKfxn(pressureVal, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], K_satArray[i], l_MvGArray[i])
             
+            thetaHArray.append(thetaH)
+            kthetaArray.append(Ktheta)
+
         plt.plot(pressureVal, kthetaArray, label=str(nameArray[i]))
 
     plt.title(title)
     plt.yscale('log')
     plt.xscale('log')
     plt.ylabel('k(theta)')
-    plt.xlabel('h (kPa)')
+    plt.xlabel('h (- cm)')
     plt.legend(ncol=2, fontsize=12)
     plt.xlim([1, 1500000])
     plt.savefig(outPath3, transparent=False)

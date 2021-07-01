@@ -48,9 +48,6 @@ def calcthetaHKfxn(pressure, WC_res, WC_sat, alpha, n, m, K_sat, l):
     thetaH = calcVGfxn(pressure, WC_res, WC_sat, alpha, n, m)            
     Ktheta = K_sat * (((thetaH - WC_res) / float(WC_sat - WC_res))**l) * (1.0 - (1.0 - ((thetaH - WC_res) / float(WC_sat - WC_res))**(1.0/m))**m)**2.0
             
-    arcpy.AddMessage('thetaH: ' + str(thetaH))
-    arcpy.AddMessage('Ktheta: ' + str(Ktheta))
-
     return thetaH, Ktheta
 
 def calcVG(WC_residual, WC_sat, alpha_VG, n_VG, m_VG):

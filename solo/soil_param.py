@@ -2711,20 +2711,24 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 # Plotting functions
                 vanGenuchten.plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray, nameArray, textureArray)
 
-                # Write the results to output shapefile
-                arcpy.AddField_management(outputShp, "warning", "TEXT")
-                arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
+                if common.CheckField(outputShp, 'K_sat'):
+                    log.info('K_sat already present in output shapefile...')
 
-                outputFields = ["warning", "K_sat"]
-                
-                recordNum = 0
-                with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
-                    for row in cursor:
-                        row[0] = warningArray[recordNum]
-                        row[1] = K_satArray[recordNum]
+                else:
+                    # Write the results to output shapefile
+                    arcpy.AddField_management(outputShp, "warning", "TEXT")
+                    arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                        cursor.updateRow(row)
-                        recordNum += 1               
+                    outputFields = ["warning", "K_sat"]
+                    
+                    recordNum = 0
+                    with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                        for row in cursor:
+                            row[0] = warningArray[recordNum]
+                            row[1] = K_satArray[recordNum]
+
+                            cursor.updateRow(row)
+                            recordNum += 1               
                     
             elif MVGOption == 'Weynants_2009':
 
@@ -2811,20 +2815,24 @@ def function(outputFolder, inputShp, PTFChoice, PTFOption, VGChoice, VGOption, V
                 # Plotting functions
                 vanGenuchten.plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray, nameArray, textureArray)
 
-                # Write the results to output shapefile
-                arcpy.AddField_management(outputShp, "warning", "TEXT")
-                arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
+                if common.CheckField(outputShp, 'K_sat'):
+                    log.info('K_sat already present in output shapefile...')
 
-                outputFields = ["warning", "K_sat"]
-                
-                recordNum = 0
-                with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
-                    for row in cursor:
-                        row[0] = warningArray[recordNum]
-                        row[1] = K_satArray[recordNum]
+                else:
+                    # Write the results to output shapefile
+                    arcpy.AddField_management(outputShp, "warning", "TEXT")
+                    arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
 
-                        cursor.updateRow(row)
-                        recordNum += 1
+                    outputFields = ["warning", "K_sat"]
+                    
+                    recordNum = 0
+                    with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+                        for row in cursor:
+                            row[0] = warningArray[recordNum]
+                            row[1] = K_satArray[recordNum]
+
+                            cursor.updateRow(row)
+                            recordNum += 1
 
             else:
                 log.error('Mualem-Van Genuchten option not recognised')

@@ -444,18 +444,8 @@ def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArra
 
     pressureVal = np.linspace(0.0, 1500.0, 1500)
     for i in range(0, len(record)):
-
-        thetaHArray = []
-        kthetaArray = []
-
-        for j in range(0, len(pressureVal)):
-
-            thetaH, Ktheta = calcthetaHKfxn(pressureVal, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], K_satArray[i], l_MvGArray[i])
-
-            thetaHArray.append(thetaH)
-            kthetaArray.append(Ktheta)            
-
-        plt.plot(thetaHArray, kthetaArray, label=str(nameArray[i]))
+        thetaH, Ktheta = calcthetaHKfxn(pressureVal, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], K_satArray[i], l_MvGArray[i])          
+        plt.plot(thetaH, Ktheta, label=str(nameArray[i]))
 
     plt.title(title)
     plt.yscale('log')
@@ -477,18 +467,8 @@ def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArra
 
     pressureVal = np.linspace(1.0, 1500.0, 1500)
     for i in range(0, len(record)):
-
-        thetaHArray = []
-        kthetaArray = []
-
-        for j in range(0, len(pressureVal)):
-
-            thetaH, Ktheta = calcthetaHKfxn(pressureVal, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], K_satArray[i], l_MvGArray[i])
-            
-            thetaHArray.append(thetaH)
-            kthetaArray.append(Ktheta)
-
-        plt.plot(pressureVal, kthetaArray, label=str(nameArray[i]))
+        thetaH, Ktheta = calcthetaHKfxn(pressureVal, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], K_satArray[i], l_MvGArray[i])
+        plt.plot(pressureVal, Ktheta, label=str(nameArray[i]))
 
     plt.title(title)
     plt.yscale('log')
@@ -496,7 +476,7 @@ def plotMVG(outputFolder, record, K_satArray, alpha_VGArray, n_VGArray, m_VGArra
     plt.ylabel('k(theta)')
     plt.xlabel('h (- cm)')
     plt.legend(ncol=2, fontsize=12)
-    plt.xlim([1, 1500000])
+    plt.xlim([1, 150000])
     plt.savefig(outPath3, transparent=False)
     plt.close()
     log.info('Plot created')

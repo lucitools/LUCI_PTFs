@@ -1,0 +1,106 @@
+import arcpy
+import os
+import sys
+
+import LUCI_PTFs.lib.log as log
+import LUCI_PTFs.lib.common as common
+import LUCI_PTFs.lib.progress as progress
+import LUCI_PTFs.solo.calc_vg as calc_vg
+import LUCI_PTFs.lib.PTFdatabase as PTFdatabase
+
+from LUCI_PTFs.lib.refresh_modules import refresh_modules
+refresh_modules([log, common, calc_vg, PTFdatabase])
+
+def function(params):
+
+    try:
+        pText = common.paramsAsText(params)
+
+        # Get inputs
+        runSystemChecks = common.strToBool(pText[1])
+        outputFolder = pText[2]
+        inputShapefile = pText[3]
+        VGChoice = pText[4]
+        fieldFC = pText[5]
+        fieldSIC = pText[6]
+        fieldPWP = pText[7]
+        carbonContent = pText[8]
+        carbonConFactor = pText[9]
+        unitsPlot = pText[10]
+        MVGChoice =  common.strToBool(pText[11])
+
+        # Create output folder
+        if not os.path.exists(outputFolder):
+            os.mkdir(outputFolder)
+
+        common.runSystemChecks(outputFolder)
+
+        # Set up logging output to file
+        log.setupLogging(outputFolder)
+
+        # Write input params to XML
+        common.writeParamsToXML(params, outputFolder)
+
+        # Simplify VGOption
+        if VGChoice == "Wosten et al. (1999) topsoil":
+            VGOption = "Wosten_1999_top"
+
+        elif VGChoice == "Wosten et al. (1999) subsoil":
+            VGOption = "Wosten_1999_sub"
+
+        elif VGChoice == "Vereecken et al. (1989)":
+            VGOption = "Vereecken_1989"
+
+        elif VGChoice == "Zacharias and Wessolek (2007)":
+            VGOption = "ZachariasWessolek_2007"
+
+        elif VGChoice == "Weynants et al. (2009)":
+            VGOption = "Weynants_2009"
+
+        elif VGChoice == "Dashtaki et al. (2010)":
+            VGOption = 'Dashtaki_2010_vg'
+
+        elif VGChoice == "Hodnett and Tomasella (2002)":
+            VGOption = 'HodnettTomasella_2002'
+
+        else:
+            log.error('Invalid PTF option')
+            sys.exit()
+
+        # Set carbon content choice
+        if carbonContent == 'Organic carbon':
+            carbContent = 'OC'
+
+        elif carbonContent == 'Organic matter':
+            carbContent = 'OM'
+
+        else:
+            log.error('Invalid carbon content option')
+            sys.exit()
+
+        # Pull out PTFinfo
+        PTFInfo = PTFdatabase.checkPTF(VGOption)
+        PTFType = PTFInfo.PTFType
+        PTFUnit = PTFInfo.PTFUnit
+
+        PTFOut = [("VGOption", VGOption),
+                  ("PTFType", PTFType),
+                  ("UserUnitPlot", unitsPlot),
+                  ("carbContent", carbContent)]
+
+        # Write to XML file
+        PTFXML = os.path.join(outputFolder, "ptfinfo.xml")
+        common.writeXML(PTFXML, PTFOut)
+
+        # Call van Genuchten function
+        calc_vg.function(outputFolder, inputShapefile, VGOption, MVGChoice, fieldFC, fieldSIC, fieldPWP, carbContent, carbonConFactor)
+
+        # Loading shapefile automatically
+        soilParamOut = os.path.join(outputFolder, "soil_vg.shp")
+        arcpy.SetParameter(12, soilParamOut)
+
+        log.info("van Genuchten operations completed successfully")
+
+    except Exception:
+        log.exception("van Genuchten tool failed")
+        raise

@@ -6,9 +6,10 @@ import LUCI_PTFs.lib.log as log
 import LUCI_PTFs.lib.common as common
 import LUCI_PTFs.lib.progress as progress
 import LUCI_PTFs.solo.calc_ksat as CalcKsat
+import LUCI_PTFs.lib.PTFdatabase as PTFdatabase
 
 from LUCI_PTFs.lib.refresh_modules import refresh_modules
-refresh_modules([log, common, CalcKsat])
+refresh_modules([log, common, CalcKsat, PTFdatabase])
 
 def function(params):
 
@@ -18,17 +19,13 @@ def function(params):
         # Get inputs
         runSystemChecks = common.strToBool(pText[1])
         outputFolder = pText[2]
-        inputShapefile = pText[3]
+        inputFolder = pText[3]
 
         # Get equation of choice
         Ksat = pText[4]
 
-        # Retrieve required fields
-        fieldFC = pText[5] # field capacity
-        fieldSat = pText[6] # saturation
-
-        carbonContent = pText[7]
-        carbonConFactor = pText[8]
+        carbonContent = pText[5]
+        carbonConFactor = pText[6]
 
         # Create output folder
         if not os.path.exists(outputFolder):
@@ -66,43 +63,19 @@ def function(params):
         elif Ksat == 'Ahuja et al. (1989)':
             KsatOption = 'Ahuja_1989'
 
-            if fieldFC == '' or fieldFC is None:
-                log.error('Field name containing WC at field capacity must be specified')
-                sys.exit()
-
-            elif fieldSat == '' or fieldSat is None:
-                log.error('Field name containing WC at saturation must be specified')
-                sys.exit()
-
-            else:
-                log.info('Ahuja et al. (1989) will use input water content at field capacity and saturation')
-
         elif Ksat == 'Minasny and McBratney (2000)':
             KsatOption = 'MinasnyMcBratney_2000'
-
-            if fieldFC == '' or fieldFC is None:
-                log.error('Field name containing WC at field capacity must be specified')
-                sys.exit()
-
-            elif fieldSat == '' or fieldSat is None:
-                log.error('Field name containing WC at saturation must be specified')
-                sys.exit()
-
-            else:
-                log.info('Minasny and McBratney (2000) will use input water content at field capacity and saturation')
 
         elif Ksat == 'Brakensiek et al. (1984)':
             KsatOption = 'Brakensiek_1984'
 
-            if fieldSat == '' or fieldSat is None:
-                log.error('Field name containing WC at saturation must be specified')
-                sys.exit()
-
-            else:
-                log.info('Brakensiek et al. (1984) will use input water content at saturation')
-
         elif Ksat == 'Wosten et al. (1999)':
             KsatOption = 'Wosten_1999'
+            log.info('===========================================================================')
+            log.info('Wosten et al. (1999) already calculated Ksat in the previous step')
+            log.info('Please check the output shapefile of the previous step for the K_sat field')
+            log.info('===========================================================================')
+            sys.exit()
 
         else:
             log.error('Invalid Ksat option')
@@ -119,12 +92,25 @@ def function(params):
             log.error('Invalid carbon content option')
             sys.exit()
 
-        CalcKsat.function(outputFolder, inputShapefile, KsatOption, fieldFC, fieldSat,
+        # Pull out PTFinfo
+        PTFInfo = PTFdatabase.checkPTF(KsatOption)
+        PTFType = PTFInfo.PTFType
+        PTFUnit = PTFInfo.PTFUnit
+
+        PTFOut = [("KsatOption", KsatOption),
+                  ("PTFType", PTFType),
+                  ("carbContent", carbContent)]
+
+        # Write to XML file
+        PTFXML = os.path.join(outputFolder, "ksat_ptfinfo.xml")
+        common.writeXML(PTFXML, PTFOut)
+
+        CalcKsat.function(outputFolder, inputFolder, KsatOption,
                           carbContent, carbonConFactor)
 
         # Set output filename for display
         KsatOut = os.path.join(outputFolder, "Ksat.shp")
-        arcpy.SetParameter(9, KsatOut)
+        arcpy.SetParameter(7, KsatOut)
 
         log.info("Saturated hydraulic conductivity operations completed successfully")
 

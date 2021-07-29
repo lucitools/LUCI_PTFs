@@ -35,6 +35,18 @@ import LUCI_PTFs.tool_classes.c_CalcKsat as c_CalcKsat
 refresh_modules(c_CalcKsat)
 CalcKsat = c_CalcKsat.CalcKsat
 
+import LUCI_PTFs.tool_classes.c_BrooksCorey as c_BrooksCorey
+refresh_modules(c_BrooksCorey)
+BrooksCorey = c_BrooksCorey.BrooksCorey
+
+import LUCI_PTFs.tool_classes.c_CalcVG as c_CalcVG
+refresh_modules(c_CalcVG)
+calcVG_PTFs = c_CalcVG.calcVG_PTFs
+
+import LUCI_PTFs.tool_classes.c_CalcPointPTFs as c_CalcPointPTFs
+refresh_modules(c_CalcPointPTFs)
+calcPoint_PTFs = c_CalcPointPTFs.calcPoint_PTFs
+
 ##########################
 ### Toolbox definition ###
 ##########################
@@ -43,5 +55,6 @@ class Toolbox(object):
 
     def __init__(self):
         self.label = u'LUCI PTF v1.0'
-        self.alias = u'LUCI PTF v1.0'
-        self.tools = [SoilParam, SoilMoisture, CalcKsat]
+        self.alias = u'LUCI_PTF'
+        # self.tools = [SoilMoisture, CalcKsat, BrooksCorey, calcVG_PTFs, calcPoint_PTFs]
+        self.tools = [calcVG_PTFs, calcPoint_PTFs, CalcKsat]

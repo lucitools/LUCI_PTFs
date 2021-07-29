@@ -3,7 +3,7 @@ import configuration
 import os
 from LUCI_PTFs.lib.refresh_modules import refresh_modules
 
-class SoilParam(object):
+class calcPoint_PTFs(object):
 
     class ToolValidator:
         """Class for validating a tool's parameter values and controlling the behavior of the tool's dialog."""
@@ -51,33 +51,10 @@ class SoilParam(object):
                         if self.params[CarbParamNo].valueAsText == CarbPair[0]:
                             self.params[ConvFactorParamNo].value = CarbPair[1]
             
-            # Populate pressures
-            vgChoiceNo = None
-            vgPressuresNo = None
-            for i in range(0, len(self.params)):
-                if self.params[i].name == 'VG_of_choice':
-                    vgChoiceNo = i
-                if self.params[i].name == 'Pressure_heads_VG':
-                    vgPressuresNo = i
-
-            vgPairs = [('Wosten et al. (1999) topsoil', '10 30 100 330 1000 2000 10000 15000'),
-                       ('Wosten et al. (1999) subsoil', '10 30 100 330 1000 2000 10000 15000'),
-                       ('Vereecken et al. (1989)', '10 30 100 330 1000 2000 10000 15000'),
-                       ('Zacharias and Wessolek (2007)', '1 3 10 33 100 200 1000 1500')]
-
-            if vgChoiceNo is not None and vgPressuresNo is not None:
-                # If this is the most recently changed param ...
-                if not self.params[vgChoiceNo].hasBeenValidated:
-
-                    # Update the linking code with the correct value
-                    for vgPair in vgPairs:
-                        if self.params[vgChoiceNo].valueAsText == vgPair[0]:
-                            self.params[vgPressuresNo].value = vgPair[1]            
-
             input_validation.checkFilePaths(self)
     
     def __init__(self):
-        self.label = u'LUCI soil parameterisation'
+        self.label = u'Calculate water content using point PTFs'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -121,93 +98,61 @@ class SoilParam(object):
         param.datatype = u'Feature Class'
         params.append(param)
 
-        # 4 Calculate_PTF
-        param = arcpy.Parameter()
-        param.name = u'Calculate_PTF'
-        param.displayName = u'Estimate soil moisture content using point-PTFs'
-        param.parameterType = 'Required'
-        param.direction = 'Input'
-        param.datatype = u'Boolean'
-        param.value = u'True'
-        params.append(param)
-
-        # 5 PTF_of_choice
+        # 4 PTF_of_choice
         param = arcpy.Parameter()
         param.name = u'PTF_of_choice'
-        param.displayName = u'PTFs of choice'
+        param.displayName = u'PTF of choice'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
         param.value = u'Nguyen et al. (2014)'
         param.filter.list = [u'Nguyen et al. (2014)', u'Adhikary et al. (2008)',
-                             u'Rawls et al. (1982)', u'Saxton et al. (1986)',
+                             u'Rawls et al. (1982)', 
                              u'Hall et al. (1977) topsoil', u'Hall et al. (1977) subsoil', u'Gupta and Larson (1979)',
                              u'Batjes (1996)', u'Saxton and Rawls (2006)',
-                             u'Pidgeon (1972)', u'Lal (1978)', u'Aina and Periaswamy (1985)',
+                             u'Pidgeon (1972)',
+                             u'Lal (1978) Group I - Clay, BD', u'Lal (1978) Group II - Clay, BD',
+                             u'Aina and Periaswamy (1985)',
                              u'Manrique and Jones (1991)', u'van Den Berg et al. (1997)',
                              u'Tomasella and Hodnett (1998)', u'Reichert et al. (2009) - Sand, silt, clay, OM, BD',
                              u'Reichert et al. (2009) - Sand, silt, clay, BD', u'Botula Manyala (2013)',
                              u'Shwetha and Varija (2013)', u'Dashtaki et al. (2010)',
-                             u'Santra et al. (2018)']
+                             u'Santra et al. (2018) - Sand, Clay, OC, BD',
+                             u'Santra et al. (2018) - Sand, Clay, BD']
         params.append(param)
 
-        # 6 Calculate_VG
+        # 5 FieldCapacity
         param = arcpy.Parameter()
-        param.name = u'Calculate_VG'
-        param.displayName = u'Estimate soil moisture content and generate soil moisture retention curve using PTFs for van Genuchten model'
-        param.parameterType = 'Required'
-        param.direction = 'Input'
-        param.datatype = u'Boolean'
-        param.value = u'False'
-        params.append(param)
-
-        # 7 VG_of_choice
-        param = arcpy.Parameter()
-        param.name = u'VG_of_choice'
-        param.displayName = u'PTFs of choice for van Genuchten model'
-        param.parameterType = 'Required'
-        param.direction = 'Input'
-        param.datatype = u'String'
-        param.value = u'Wosten et al. (1999) topsoil'
-        param.filter.list = [u'Wosten et al. (1999) topsoil', u'Wosten et al. (1999) subsoil',
-                             u'Vereecken et al. (1989)', u'Zacharias and Wessolek (2007)',
-                             u'Weynants et al. (2009)',
-                             u'Dashtaki et al. (2010)', u'Hodnett and Tomasella (2002)']
-        params.append(param)
-
-        # 8 Pressure_heads_VG
-        param = arcpy.Parameter()
-        param.name = u'Pressure_heads_VG'
-        param.displayName = u'Specify pressures to calculate water content using van Genuchten (space delimited)'
+        param.name = u'FieldCapacity'
+        param.displayName = u'Value of pressure (kPa) at field capacity'
         param.parameterType = 'Optional'
         param.direction = 'Input'
         param.datatype = u'String'
-        param.value = u'1 3 10 33 100 200 1000 1500'
+        param.value = u'33'
+        param.filter.list = [u'10', u'20', u'33']
         params.append(param)
 
-        # 9 Calculate_MVG
+        # 6 SIC
         param = arcpy.Parameter()
-        param.name = u'Calculate_MVG'
-        param.displayName = u'Estimate unsaturated hydraulic conductivity and generate hydraulic conductivity curve using PTFs for Mualem van Genuchten model'
-        param.parameterType = 'Required'
-        param.direction = 'Input'
-        param.datatype = u'Boolean'
-        param.value = u'False'
-        params.append(param)
-
-        # 10 MVG_of_choice
-        param = arcpy.Parameter()
-        param.name = u'MVG_of_choice'
-        param.displayName = u'Estimate Mualem van Genuchten model parameters'
-        param.parameterType = 'Required'
+        param.name = u'SIC'
+        param.displayName = u'Value of pressure (kPa) at water stress-induced stomatal closure'
+        param.parameterType = 'Optional'
         param.direction = 'Input'
         param.datatype = u'String'
-        param.value = u'Wosten et al. (1999) topsoil'
-        param.filter.list = [u'Wosten et al. (1999) topsoil', u'Wosten et al. (1999) subsoil',
-                             u'Weynants et al. (2009)']
+        param.value = u'100'
         params.append(param)
 
-        # 11 Carbon_content
+        # 7 PWP
+        param = arcpy.Parameter()
+        param.name = u'PWP'
+        param.displayName = u'Value of pressure (kPa) at permanent wilting point'
+        param.parameterType = 'Optional'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'1500'
+        params.append(param)        
+
+        # 8 Carbon_content
         param = arcpy.Parameter()
         param.name = u'Carbon_content'
         param.displayName = u'Carbon: Does your dataset contain organic carbon or organic matter?'
@@ -218,7 +163,7 @@ class SoilParam(object):
         param.filter.list = [u'Organic carbon', u'Organic matter']
         params.append(param)
 
-        # 12 Conversion_factor
+        # 9 Conversion_factor
         param = arcpy.Parameter()
         param.name = u'Conversion_factor'
         param.displayName = u'Carbon: enter a conversion factor'
@@ -228,17 +173,20 @@ class SoilParam(object):
         param.value = u'1.724'
         params.append(param)
 
-        # 13 Rerun_tool
+        # 10 Pressure_units_plot
         param = arcpy.Parameter()
-        param.name = u'Rerun_tool'
-        param.displayName = u'Rerun tool (will continue previous run from the point where any errors occurred)'
+        param.name = u'Pressure_units_plot'
+        param.displayName = u'Pressure units for plotting purposes'
         param.parameterType = 'Required'
         param.direction = 'Input'
-        param.datatype = u'Boolean'
-        param.value = u'False'
+        param.datatype = u'String'
+        param.value = u'kPa'
+        param.filter.list = [u'kPa',
+                             u'cm',
+                             u'm']
         params.append(param)
 
-        # 14 Output_Layer_SoilParam
+        # 11 Output_Layer_SoilParam
         param = arcpy.Parameter()
         param.name = u'Output_Layer_SoilParam'
         param.displayName = u'Soil'
@@ -264,7 +212,7 @@ class SoilParam(object):
 
     def execute(self, parameters, messages):
 
-        import LUCI_PTFs.tools.t_soil_param as t_soil_param
-        refresh_modules(t_soil_param)
+        import LUCI_PTFs.tools.t_calc_points as t_calc_points
+        refresh_modules(t_calc_points)
 
-        t_soil_param.function(parameters)
+        t_calc_points.function(parameters)

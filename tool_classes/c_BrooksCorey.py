@@ -3,7 +3,7 @@ import configuration
 import os
 from LUCI_PTFs.lib.refresh_modules import refresh_modules
 
-class CalcKsat(object):
+class BrooksCorey(object):
 
     class ToolValidator:
         """Class for validating a tool's parameter values and controlling the behavior of the tool's dialog."""
@@ -29,12 +29,11 @@ class CalcKsat(object):
 
             import LUCI_PTFs.lib.input_validation as input_validation
             refresh_modules(input_validation)
-
+            
             input_validation.checkFilePaths(self)
-            input_validation.checkThresholdValues(self, "CalcKsat")
     
     def __init__(self):
-        self.label = u'Calculate saturated hydraulic conductivity (Ksat)'
+        self.label = u'Calculate using Brooks-Corey'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -69,57 +68,33 @@ class CalcKsat(object):
         param.datatype = u'Folder'
         params.append(param)
 
-        # 3 Input_folder
+        # 3 Input_shapefile
         param = arcpy.Parameter()
-        param.name = u'Input_folder'
-        param.displayName = u'Input folder: results from calculation using point-PTF or vg-PTFs'
+        param.name = u'Input_shapefile'
+        param.displayName = u'Input soil shapefile'
         param.parameterType = 'Required'
         param.direction = 'Input'
-        param.datatype = u'Folder'
+        param.datatype = u'Feature Class'
         params.append(param)
 
-        # 4 Ksat_of_choice
+        # 4 PTF_of_choice
         param = arcpy.Parameter()
-        param.name = u'Ksat_of_choice'
-        param.displayName = u'Select PTF to estimate Ksat'
-        param.parameterType = 'Required'
-        param.direction = 'Input'
-        param.datatype = u'String'
-        param.value = u'Cosby et al. (1984)'
-        param.filter.list = [u'Cosby et al. (1984)', u'Puckett et al. (1985)',
-                             u'Jabro (1992)', u'Campbell and Shiozawa (1994)',
-                             u'Ferrer Julia et al. (2004) - Sand',
-                             u'Ferrer Julia et al. (2004) - Sand, clay, OM',
-                             u'Brakensiek et al. (1984)',
-                             u'Ahuja et al. (1989)', u'Minasny and McBratney (2000)',
-                             u'Wosten et al. (1999)']
-        params.append(param)
-
-        # 5 Carbon_content
-        param = arcpy.Parameter()
-        param.name = u'Carbon_content'
-        param.displayName = u'Carbon: Does your dataset contain organic carbon or organic matter?'
+        param.name = u'PTF_of_choice'
+        param.displayName = u'PTFs of choice'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
-        param.value = u'Organic carbon'
-        param.filter.list = [u'Organic carbon', u'Organic matter']
+        param.value = u'Cosby et al. (1984) - Silt and Clay'
+        param.filter.list = [u'Cosby et al. (1984) - Silt and Clay',
+                             u'Cosby et al. (1984) - Sand, Silt and Clay',
+                             u'Rawls and Brakensiek (1985)',
+                             u'Campbell and Shiozava (1992)', u'Saxton et al. (1986)']
         params.append(param)
 
-        # 6 Conversion_factor
+        # 5 Output_Layer_SoilParam
         param = arcpy.Parameter()
-        param.name = u'Conversion_factor'
-        param.displayName = u'Carbon: enter a conversion factor'
-        param.parameterType = 'Required'
-        param.direction = 'Input'
-        param.datatype = u'Double'
-        param.value = u'1.724'
-        params.append(param)
-
-        # 7 Output_Layer_Ksat
-        param = arcpy.Parameter()
-        param.name = u'Output_Layer_Ksat'
-        param.displayName = u'Ksat'
+        param.name = u'Output_Layer_SoilParam'
+        param.displayName = u'Soil'
         param.parameterType = 'Derived'
         param.direction = 'Output'
         param.datatype = u'Feature Layer'
@@ -142,7 +117,7 @@ class CalcKsat(object):
 
     def execute(self, parameters, messages):
 
-        import LUCI_PTFs.tools.t_calc_ksat as t_calc_ksat
-        refresh_modules(t_calc_ksat)
+        import LUCI_PTFs.tools.t_brooks_corey as t_brooks_corey
+        refresh_modules(t_brooks_corey)
 
-        t_calc_ksat.function(parameters)
+        t_brooks_corey.function(parameters)

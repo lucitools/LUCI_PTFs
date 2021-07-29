@@ -433,3 +433,58 @@ def CleanFields(checkfile, fieldstokeep):
         log.error("Error occurred while attempting to clean unwanted fields in file " + checkfile)
         raise
 
+
+def writeFields(outputShp, fieldArray):
+
+    # Writes fields to the outputShp
+
+    class Field:
+        def __init__(self, name, type, precision=None):
+            self.name = name
+            self.type = type
+            self.precision = precision
+
+ 
+    fieldList = []
+
+    for field in fieldArray:
+        if field == "warning":
+            fieldList.append(Field("warning", 'TEXT'))
+
+        else:
+            fieldList.append(Field(field, 'DOUBLE', '10'))
+
+    # Create fields in output shapefile
+    for f in fieldList:
+        arcpy.AddField_management(outputShp, f.name, f.type, f.precision)
+
+def getInputValue(folder, paramName):
+ 
+    inputsXML = os.path.join(folder, 'inputs.xml')
+
+    if os.path.exists(inputsXML):
+        inputValue = readXML(inputsXML, paramName)
+    else:
+        inputValue = None
+ 
+    return inputValue
+
+def writeWarning(outputShp, warningArray):
+
+    # Write the warnings to output shapefile
+    arcpy.AddField_management(outputShp, "warning", "TEXT")
+
+    outputFields = ["warning"]
+    
+    recordNum = 0
+    with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+        for row in cursor:
+            row[0] = warningArray[recordNum]
+
+            cursor.updateRow(row)
+            recordNum += 1
+
+def getOIDField(shapefile):
+    OID = str(arcpy.Describe(shapefile).oidFieldName)
+
+    return OID

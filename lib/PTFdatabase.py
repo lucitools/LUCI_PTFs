@@ -49,7 +49,7 @@ def checkPTF(PTFOption):
 
     elif PTFOption == "Rawls_1982":
         PTFType = "pointPTF"
-        PTFPressures = [4, 7, 10, 20, 33, 50, 100, 200, 400, 700, 1000, 1500]
+        PTFPressures = [10, 20, 33, 50, 100, 200, 400, 700, 1000, 1500]
         PTFUnit = "kPa"
         PTFFields = setOutputFields(PTFPressures, PTFUnit)
 
@@ -115,7 +115,7 @@ def checkPTF(PTFOption):
 
     elif PTFOption == "TomasellaHodnett_1998":
         PTFType = "pointPTF"
-        PTFPressures = [0, 1, 3.3, 6, 10, 33, 100, 500, 1500]
+        PTFPressures = [0, 1, 3, 6, 10, 33, 100, 500, 1500]
         PTFUnit = "kPa"
         PTFFields = setOutputFields(PTFPressures, PTFUnit)
 
@@ -188,7 +188,7 @@ def checkPTF(PTFOption):
     elif PTFOption == "Dashtaki_2010_vg":
         PTFType = "vgPTF"
         PTFPressures = "SMRC"
-        PTFUnit = "kPa" # original units of Dashtaki et al. (2010)
+        PTFUnit = "cm" # original units of Dashtaki et al. (2010)
         PTFFields = ["warning"]
 
     elif PTFOption == "HodnettTomasella_2002":

@@ -268,8 +268,6 @@ def Rawls_1982(outputFolder, outputShp, carbonConFactor, carbContent):
 
     # Returns these arrays
     warningArray = []
-    WC_4kPaArray = []
-    WC_7kPaArray = []
     WC_10kPaArray = []
     WC_20kPaArray = []
     WC_33kPaArray = []
@@ -284,7 +282,7 @@ def Rawls_1982(outputFolder, outputShp, carbonConFactor, carbContent):
     # Get OID field
     OIDField = common.getOIDField(outputShp)
 
-    # Requirements: sand, silt, clay, OM, and BD
+    # Requirements: sand, silt, clay, OC, and BD
     if carbContent == 'OC':
         reqFields = [OIDField, "Sand", "Silt", "Clay", "OC", "BD"]                    
 
@@ -327,8 +325,6 @@ def Rawls_1982(outputFolder, outputShp, carbonConFactor, carbContent):
         warningArray.append(warningFlag)
 
         # Calculate water content using Rawls et al. (1982) cm3cm-3
-        WC_4kPa = 0.7899 - (0.0037 * sandPerc[x]) + (0.01 * (carbPerc[x] * float(carbonConFactor))) - (0.1315 * BDg_cm3[x])
-        WC_7kPa = 0.7135 - (0.003 * sandPerc[x]) + (0.0017 * clayPerc[x]) - (0.1693 * BDg_cm3[x])
         WC_10kPa = 0.4188 - (0.0030 * sandPerc[x]) + (0.0023 * clayPerc[x]) + (0.0317 * (carbPerc[x] * float(carbonConFactor)))
         WC_20kPa = 0.3121 - (0.0024 * sandPerc[x]) + (0.0032 * clayPerc[x]) + (0.0314 * (carbPerc[x] * float(carbonConFactor)))
         WC_33kPa = 0.2576 - (0.002 * sandPerc[x]) + (0.0036 * clayPerc[x]) + (0.0299 * (carbPerc[x] * float(carbonConFactor)))
@@ -340,11 +336,9 @@ def Rawls_1982(outputFolder, outputShp, carbonConFactor, carbContent):
         WC_1000kPa = 0.0205 + (0.0005 * siltPerc[x]) + (0.0049 * clayPerc[x]) + (0.0154 * (carbPerc[x] * float(carbonConFactor)))
         WC_1500kPa = 0.026 + (0.005 * clayPerc[x]) + (0.0158 * (carbPerc[x] * float(carbonConFactor)))
         
-        outValues = [WC_4kPa, WC_7kPa, WC_10kPa, WC_20kPa, WC_33kPa, WC_60kPa, WC_100kPa, WC_200kPa, WC_400kPa, WC_700kPa, WC_1000kPa, WC_1500kPa]
+        outValues = [WC_10kPa, WC_20kPa, WC_33kPa, WC_60kPa, WC_100kPa, WC_200kPa, WC_400kPa, WC_700kPa, WC_1000kPa, WC_1500kPa]
         checks_PTFs.checkNegOutput(outValues, x)
 
-        WC_4kPaArray.append(WC_4kPa)
-        WC_7kPaArray.append(WC_7kPa)
         WC_10kPaArray.append(WC_10kPa)
         WC_20kPaArray.append(WC_20kPa)
         WC_33kPaArray.append(WC_33kPa)
@@ -363,26 +357,22 @@ def Rawls_1982(outputFolder, outputShp, carbonConFactor, carbContent):
     with arcpy.da.UpdateCursor(outputShp, PTFFields) as cursor:
         for row in cursor:
             row[0] = warningArray[recordNum]
-            row[1] = WC_4kPaArray[recordNum]
-            row[2] = WC_7kPaArray[recordNum]
-            row[3] = WC_10kPaArray[recordNum]
-            row[4] = WC_20kPaArray[recordNum]
-            row[5] = WC_33kPaArray[recordNum]
-            row[6] = WC_60kPaArray[recordNum]
-            row[7] = WC_100kPaArray[recordNum]
-            row[8] = WC_200kPaArray[recordNum]
-            row[9] = WC_400kPaArray[recordNum]
-            row[10] = WC_700kPaArray[recordNum]
-            row[11] = WC_1000kPaArray[recordNum]
-            row[12] = WC_1500kPaArray[recordNum]
+            row[1] = WC_10kPaArray[recordNum]
+            row[2] = WC_20kPaArray[recordNum]
+            row[3] = WC_33kPaArray[recordNum]
+            row[4] = WC_60kPaArray[recordNum]
+            row[5] = WC_100kPaArray[recordNum]
+            row[6] = WC_200kPaArray[recordNum]
+            row[7] = WC_400kPaArray[recordNum]
+            row[8] = WC_700kPaArray[recordNum]
+            row[9] = WC_1000kPaArray[recordNum]
+            row[10] = WC_1500kPaArray[recordNum]
 
             cursor.updateRow(row)
             recordNum += 1
 
     results = []
     results.append(warningArray)
-    results.append(WC_4kPaArray)
-    results.append(WC_7kPaArray)
     results.append(WC_10kPaArray)
     results.append(WC_20kPaArray)
     results.append(WC_33kPaArray)
@@ -1436,7 +1426,7 @@ def TomasellaHodnett_1998(outputFolder, outputShp, carbonConFactor, carbContent)
     warningArray = []    
     WC_0kPaArray = []
     WC_1kPaArray = []
-    WC_3_3kPaArray = []
+    WC_3kPaArray = []
     WC_6kPaArray = []
     WC_10kPaArray = []
     WC_33kPaArray = []
@@ -1486,7 +1476,7 @@ def TomasellaHodnett_1998(outputFolder, outputShp, carbonConFactor, carbContent)
         # Calculate water content using Tomasella and Hodnett (1998) - Silt, Clay, OC
         WC_0kPa = 0.01 * ((2.24 * carbPerc[x]*float(carbonConFactor)) + (0.298 * siltPerc[x]) + (0.159 * clayPerc[x]) + 37.937)
         WC_1kPa = 0.01 * ((0.53 * siltPerc[x]) + (0.255 * clayPerc[x]) + 23.839)
-        WC_3_3kPa = 0.01 * ((0.552 * siltPerc[x]) + (0.262 * clayPerc[x]) + 18.495)
+        WC_3kPa = 0.01 * ((0.552 * siltPerc[x]) + (0.262 * clayPerc[x]) + 18.495)
         WC_6kPa = 0.01 * ((0.576 * siltPerc[x]) + (0.3 * clayPerc[x]) + 12.333)
         WC_10kPa = 0.01 * ((0.543 * siltPerc[x]) + (0.321 * clayPerc[x]) + 9.806)
         WC_33kPa = 0.01 * ((0.426 * siltPerc[x]) + (0.404 * clayPerc[x]) + 4.046)
@@ -1494,12 +1484,12 @@ def TomasellaHodnett_1998(outputFolder, outputShp, carbonConFactor, carbContent)
         WC_500kPa = 0.01 * ((0.258 * siltPerc[x]) + (0.361 * clayPerc[x]) + 1.567)
         WC_1500kPa = 0.01 * ((0.15 * siltPerc[x]) + (0.396 * clayPerc[x]) + 0.91)
 
-        outValues = [WC_0kPa, WC_1kPa, WC_3_3kPa, WC_6kPa, WC_10kPa, WC_33kPa, WC_100kPa, WC_500kPa, WC_1500kPa]
+        outValues = [WC_0kPa, WC_1kPa, WC_3kPa, WC_6kPa, WC_10kPa, WC_33kPa, WC_100kPa, WC_500kPa, WC_1500kPa]
         checks_PTFs.checkNegOutput(outValues, x)
 
         WC_0kPaArray.append(WC_0kPa)
         WC_1kPaArray.append(WC_1kPa)
-        WC_3_3kPaArray.append(WC_3_3kPa)
+        WC_3kPaArray.append(WC_3kPa)
         WC_6kPaArray.append(WC_6kPa)
         WC_10kPaArray.append(WC_10kPa)
         WC_33kPaArray.append(WC_33kPa)
@@ -1513,7 +1503,7 @@ def TomasellaHodnett_1998(outputFolder, outputShp, carbonConFactor, carbContent)
     arcpy.AddField_management(outputShp, "warning", "TEXT")
     arcpy.AddField_management(outputShp, "WC_0kPa", "DOUBLE", 10, 6)
     arcpy.AddField_management(outputShp, "WC_1kPa", "DOUBLE", 10, 6)
-    arcpy.AddField_management(outputShp, "WC_3_3kPa", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "WC_3kPa", "DOUBLE", 10, 6)
     arcpy.AddField_management(outputShp, "WC_6kPa", "DOUBLE", 10, 6)
     arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
     arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
@@ -1521,14 +1511,14 @@ def TomasellaHodnett_1998(outputFolder, outputShp, carbonConFactor, carbContent)
     arcpy.AddField_management(outputShp, "WC_500kPa", "DOUBLE", 10, 6)
     arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
 
-    outputFields = ["warning", "WC_0kPa", "WC_1kPa", "WC_3_3kPa", "WC_6kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_500kPa", "WC_1500kPa"]
+    outputFields = ["warning", "WC_0kPa", "WC_1kPa", "WC_3kPa", "WC_6kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_500kPa", "WC_1500kPa"]
     recordNum = 0
     with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
         for row in cursor:
             row[0] = warningArray[recordNum]
             row[1] = WC_0kPaArray[recordNum]
             row[2] = WC_1kPaArray[recordNum]
-            row[3] = WC_3_3kPaArray[recordNum]
+            row[3] = WC_3kPaArray[recordNum]
             row[4] = WC_6kPaArray[recordNum]
             row[5] = WC_10kPaArray[recordNum]
             row[6] = WC_33kPaArray[recordNum]
@@ -1545,7 +1535,7 @@ def TomasellaHodnett_1998(outputFolder, outputShp, carbonConFactor, carbContent)
     results.append(warningArray)
     results.append(WC_0kPaArray)
     results.append(WC_1kPaArray)
-    results.append(WC_3_3kPaArray)
+    results.append(WC_3kPaArray)
     results.append(WC_6kPaArray)
     results.append(WC_10kPaArray)
     results.append(WC_33kPaArray)

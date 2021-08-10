@@ -251,6 +251,42 @@ def checkPTF(PTFOption):
         PTFUnit = "mmhr"
         PTFFields = ["warning", "K_sat"]
 
+    elif PTFOption == "Cosby_1984_SC_BC":
+        PTFType = "bcPTF"
+        PTFPressures = "bc"
+        PTFUnit = "cm"
+        PTFFields = ["warning", "WC_res", "WC_sat", "lambda_BC", "hb_BC"]
+
+    elif PTFOption == "Cosby_1984_SSC_BC":
+        PTFType = "bcPTF"
+        PTFPressures = "bc"
+        PTFUnit = "cm"
+        PTFFields = ["warning", "WC_res", "WC_sat", "lambda_BC", "hb_BC"]
+
+    elif PTFOption == "RawlsBrakensiek_1985_BC":
+        PTFType = "bcPTF"
+        PTFPressures = "bc"
+        PTFUnit = "cm"
+        PTFFields = ["warning", "WC_res", "WC_sat", "lambda_BC", "hb_BC"]
+
+    elif PTFOption == "CampbellShiozawa_1992_BC":
+        PTFType = "bcPTF"
+        PTFPressures = "bc"
+        PTFUnit = "cm"
+        PTFFields = ["warning", "WC_res", "WC_sat", "lambda_BC", "hb_BC"]
+
+    elif PTFOption == "Saxton_1986_BC":
+        PTFType = "bcPTF"
+        PTFPressures = "bc"
+        PTFUnit = "cm"
+        PTFFields = ["warning", "WC_res", "WC_sat", "lambda_BC", "hb_BC"]
+
+    elif PTFOption == "SaxtonRawls_2006_BC":
+        PTFType = "bcPTF"
+        PTFPressures = "bc"
+        PTFUnit = "cm"
+        PTFFields = ["warning", "WC_res", "WC_sat", "lambda_BC", "hb_BC"]
+
     else:
         log.error("PTF option not recognised: " + str(PTFOption))
 

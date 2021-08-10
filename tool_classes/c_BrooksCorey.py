@@ -29,6 +29,27 @@ class BrooksCorey(object):
 
             import LUCI_PTFs.lib.input_validation as input_validation
             refresh_modules(input_validation)
+
+            # Populate converstion factor automatically when either OM or OC is chosen has been chosen
+            CarbParamNo = None
+            ConvFactorParamNo = None
+            for i in range(0, len(self.params)):
+                if self.params[i].name == 'Carbon_content':
+                    CarbParamNo = i
+                if self.params[i].name == 'Conversion_factor':
+                    ConvFactorParamNo = i
+
+            CarbPairs = [('Organic carbon', 1.724),
+                         ('Organic matter', 0.58)]
+
+            if CarbParamNo is not None and ConvFactorParamNo is not None:
+                # If this is the most recently changed param ...
+                if not self.params[CarbParamNo].hasBeenValidated:
+
+                    # Update the linking code with the correct value
+                    for CarbPair in CarbPairs:
+                        if self.params[CarbParamNo].valueAsText == CarbPair[0]:
+                            self.params[ConvFactorParamNo].value = CarbPair[1]
             
             input_validation.checkFilePaths(self)
     
@@ -84,14 +105,49 @@ class BrooksCorey(object):
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
-        param.value = u'Cosby et al. (1984) - Silt and Clay'
-        param.filter.list = [u'Cosby et al. (1984) - Silt and Clay',
-                             u'Cosby et al. (1984) - Sand, Silt and Clay',
+        param.value = u'Cosby et al. (1984) - Sand, Silt and Clay'
+        param.filter.list = [u'Cosby et al. (1984) - Sand, Silt and Clay',
                              u'Rawls and Brakensiek (1985)',
-                             u'Campbell and Shiozava (1992)', u'Saxton et al. (1986)']
+                             u'Campbell and Shiozawa (1992)',
+                             u'Saxton et al. (1986)',
+                             u'Saxton and Rawls (2006)']
         params.append(param)
 
-        # 5 Output_Layer_SoilParam
+        # 5 Carbon_content
+        param = arcpy.Parameter()
+        param.name = u'Carbon_content'
+        param.displayName = u'Carbon: Does your dataset contain organic carbon or organic matter?'
+        param.parameterType = 'Required'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'Organic carbon'
+        param.filter.list = [u'Organic carbon', u'Organic matter']
+        params.append(param)
+
+        # 6 Conversion_factor
+        param = arcpy.Parameter()
+        param.name = u'Conversion_factor'
+        param.displayName = u'Carbon: enter a conversion factor'
+        param.parameterType = 'Required'
+        param.direction = 'Input'
+        param.datatype = u'Double'
+        param.value = u'1.724'
+        params.append(param)
+
+        # 7 Pressure_units_plot
+        param = arcpy.Parameter()
+        param.name = u'Pressure_units_plot'
+        param.displayName = u'Pressure units for plotting purposes'
+        param.parameterType = 'Required'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'kPa'
+        param.filter.list = [u'kPa',
+                             u'cm',
+                             u'm']
+        params.append(param)
+
+        # 8 Output_Layer_SoilParam
         param = arcpy.Parameter()
         param.name = u'Output_Layer_SoilParam'
         param.displayName = u'Soil'

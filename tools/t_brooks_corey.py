@@ -5,9 +5,10 @@ import LUCI_PTFs.lib.log as log
 import LUCI_PTFs.lib.common as common
 import LUCI_PTFs.lib.progress as progress
 import LUCI_PTFs.solo.brooks_corey as brooks_corey
+import LUCI_PTFs.lib.PTFdatabase as PTFdatabase
 
 from LUCI_PTFs.lib.refresh_modules import refresh_modules
-refresh_modules([log, common, brooks_corey])
+refresh_modules([log, common, brooks_corey, PTFdatabase])
 
 def function(params):
 
@@ -19,6 +20,9 @@ def function(params):
         outputFolder = pText[2]
         inputShapefile = pText[3]
         PTFChoice = pText[4]
+        carbonContent = pText[5]
+        carbonConFactor = pText[6]
+        unitsPlot = pText[7]
 
         # Create output folder
         if not os.path.exists(outputFolder):
@@ -35,29 +39,62 @@ def function(params):
         common.writeParamsToXML(params, outputFolder)
 
         if PTFChoice == 'Cosby et al. (1984) - Silt and Clay':
-            PTFOption = 'Cosby_1984_SC'
+            PTFOption = 'Cosby_1984_SC_BC'
 
         elif PTFChoice == 'Cosby et al. (1984) - Sand, Silt and Clay':
-            PTFOption = 'Cosby_1984_SSC'
+            PTFOption = 'Cosby_1984_SSC_BC'
 
         elif PTFChoice == 'Rawls and Brakensiek (1985)':
-            PTFOption = 'RawlsBrakensiek_1985'
+            PTFOption = 'RawlsBrakensiek_1985_BC'
+            log.warning("Rawls and Brakensiek (1985) requires water content at saturation")
+            log.warning("Please ensure the WC_sat field is present in the shapefile")
 
-        elif PTFChoice == 'Campbell and Shiozava (1992)':
-            PTFOption = 'CampbellShiozava_1992'
+        elif PTFChoice == 'Campbell and Shiozawa (1992)':
+            PTFOption = 'CampbellShiozawa_1992_BC'
+            log.warning("Campbell and Shiozava (1992) requires water content at saturation")
+            log.warning("Please ensure the WC_sat field is present in the shapefile")
 
         elif PTFChoice == 'Saxton et al. (1986)':
-            PTFOption = 'Saxton_1986'
+            PTFOption = 'Saxton_1986_BC'
+            
+        elif PTFChoice == 'Saxton and Rawls (2006)':
+            PTFOption = 'SaxtonRawls_2006_BC'
 
         else:
-            log.error('Choice for readily-available water calculation not recognised')
+            log.error('Choice for Brooks-Corey calculation not recognised')
             sys.exit()
 
-        brooks_corey.function(outputFolder, inputShapefile, PTFOption)
+        # Set carbon content choice
+        if carbonContent == 'Organic carbon':
+            carbContent = 'OC'
+
+        elif carbonContent == 'Organic matter':
+            carbContent = 'OM'
+
+        else:
+            log.error('Invalid carbon content option')
+            sys.exit()
+
+        # Pull out PTFinfo
+        PTFInfo = PTFdatabase.checkPTF(PTFOption)
+        PTFType = PTFInfo.PTFType
+        PTFUnit = PTFInfo.PTFUnit
+
+        PTFOut = [("BCOption", PTFOption),
+                  ("PTFType", PTFType),
+                  ("UserUnitPlot", unitsPlot),
+                  ("carbContent", carbContent)]
+
+        # Write to XML file
+        PTFXML = os.path.join(outputFolder, "ptfinfo.xml")
+        common.writeXML(PTFXML, PTFOut)
+
+        # Call Brooks-Corey function
+        brooks_corey.function(outputFolder, inputShapefile, PTFOption, carbContent, carbonConFactor)
 
         # Set output filename for display
         BCOut = os.path.join(outputFolder, "BrooksCorey.shp")
-        arcpy.SetParameter(5, BCOut)
+        arcpy.SetParameter(8, BCOut)
 
         log.info("Brooks-Corey operations completed successfully")
 

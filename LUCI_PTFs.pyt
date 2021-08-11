@@ -57,4 +57,4 @@ class Toolbox(object):
         self.label = u'LUCI PTF v1.0'
         self.alias = u'LUCI_PTF'
         # self.tools = [SoilMoisture, CalcKsat, BrooksCorey, calcVG_PTFs, calcPoint_PTFs]
-        self.tools = [calcVG_PTFs, calcPoint_PTFs, CalcKsat]
+        self.tools = [calcVG_PTFs, calcPoint_PTFs, CalcKsat, BrooksCorey]

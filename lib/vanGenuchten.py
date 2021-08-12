@@ -505,3 +505,14 @@ def plotMVG(outputFolder, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvG
     plt.savefig(outPath3, transparent=False)
     plt.close()
     log.info('Plot created')
+
+def calcPressuresMVG(name, K_sat, alpha_VG, n_VG, m_VG, l_MvG, vgPressures):
+
+    # Calculates K at user-input pressures
+    kValues = [name]
+
+    for pressure in vgPressures:
+        k_h = calcKhfxn(pressure, K_sat, alpha_VG, n_VG, m_VG, l_MvG)
+        kValues.append(k_h)
+
+    return kValues

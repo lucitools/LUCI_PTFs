@@ -112,7 +112,17 @@ class calcVG_PTFs(object):
                              u'Dashtaki et al. (2010)', u'Hodnett and Tomasella (2002)']
         params.append(param)
 
-        # 5 Field_FC
+        # 5 Pressure_heads_VG
+        param = arcpy.Parameter()
+        param.name = u'Pressure_heads_VG'
+        param.displayName = u'Specify pressures to calculate water content using van Genuchten (space delimited)'
+        param.parameterType = 'Optional'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'1 3 10 33 100 200 1000 1500'
+        params.append(param)
+
+        # 6 Field_FC
         param = arcpy.Parameter()
         param.name = u'Field_FC'
         param.displayName = u'Field containing pressure (kPa) at field capacity'
@@ -121,7 +131,7 @@ class calcVG_PTFs(object):
         param.datatype = u'String'
         params.append(param)
 
-        # 6 Field_SIC
+        # 7 Field_SIC
         param = arcpy.Parameter()
         param.name = u'Field_SIC'
         param.displayName = u'Field containing pressure (kPa) at water stress-induced stomatal closure'
@@ -130,7 +140,7 @@ class calcVG_PTFs(object):
         param.datatype = u'String'
         params.append(param)
 
-        # 7 Field_PWP
+        # 8 Field_PWP
         param = arcpy.Parameter()
         param.name = u'Field_PWP'
         param.displayName = u'Field containing pressure (kPa) at permanent wilting point'
@@ -139,7 +149,7 @@ class calcVG_PTFs(object):
         param.datatype = u'String'
         params.append(param)        
 
-        # 8 Carbon_content
+        # 9 Carbon_content
         param = arcpy.Parameter()
         param.name = u'Carbon_content'
         param.displayName = u'Carbon: Does your dataset contain organic carbon or organic matter?'
@@ -150,7 +160,7 @@ class calcVG_PTFs(object):
         param.filter.list = [u'Organic carbon', u'Organic matter']
         params.append(param)
 
-        # 9 Conversion_factor
+        # 10 Conversion_factor
         param = arcpy.Parameter()
         param.name = u'Conversion_factor'
         param.displayName = u'Carbon: enter a conversion factor'
@@ -160,7 +170,7 @@ class calcVG_PTFs(object):
         param.value = u'1.724'
         params.append(param)
 
-        # 10 Pressure_units_plot
+        # 11 Pressure_units_plot
         param = arcpy.Parameter()
         param.name = u'Pressure_units_plot'
         param.displayName = u'Pressure units for plotting purposes'
@@ -173,7 +183,7 @@ class calcVG_PTFs(object):
                              u'm']
         params.append(param)
 
-        # 11 Calculate_MVG
+        # 12 Calculate_MVG
         param = arcpy.Parameter()
         param.name = u'Calculate_MVG'
         param.displayName = u'Estimate unsaturated hydraulic conductivity and generate hydraulic conductivity curve using PTFs for Mualem van Genuchten model'
@@ -183,7 +193,7 @@ class calcVG_PTFs(object):
         param.value = u'False'
         params.append(param)
 
-        # 12 Output_Layer_SoilParam
+        # 13 Output_Layer_SoilParam
         param = arcpy.Parameter()
         param.name = u'Output_Layer_SoilParam'
         param.displayName = u'Soil'

@@ -21,13 +21,14 @@ def function(params):
         outputFolder = pText[2]
         inputShapefile = pText[3]
         VGChoice = pText[4]
-        fieldFC = pText[5]
-        fieldSIC = pText[6]
-        fieldPWP = pText[7]
-        carbonContent = pText[8]
-        carbonConFactor = pText[9]
-        unitsPlot = pText[10]
-        MVGChoice =  common.strToBool(pText[11])
+        VGPressures = pText[5]
+        fieldFC = pText[6]
+        fieldSIC = pText[7]
+        fieldPWP = pText[8]
+        carbonContent = pText[9]
+        carbonConFactor = pText[10]
+        unitsPlot = pText[11]
+        MVGChoice =  common.strToBool(pText[12])
 
         # Create output folder
         if not os.path.exists(outputFolder):
@@ -78,6 +79,12 @@ def function(params):
             log.error('Invalid carbon content option')
             sys.exit()
 
+        # Unpack 'VG pressure heads' parameter
+        if VGPressures is None:
+            VGPressArray = []
+        else:
+            VGPressArray = VGPressures.split(' ')
+
         # Pull out PTFinfo
         PTFInfo = PTFdatabase.checkPTF(VGOption)
         PTFType = PTFInfo.PTFType
@@ -93,11 +100,13 @@ def function(params):
         common.writeXML(PTFXML, PTFOut)
 
         # Call van Genuchten function
-        calc_vg.function(outputFolder, inputShapefile, VGOption, MVGChoice, fieldFC, fieldSIC, fieldPWP, carbContent, carbonConFactor)
+        calc_vg.function(outputFolder, inputShapefile, VGOption, VGPressArray,
+                         MVGChoice, fieldFC, fieldSIC, fieldPWP,
+                         carbContent, carbonConFactor)
 
         # Loading shapefile automatically
         soilParamOut = os.path.join(outputFolder, "soil_vg.shp")
-        arcpy.SetParameter(12, soilParamOut)
+        arcpy.SetParameter(13, soilParamOut)
 
         log.info("van Genuchten operations completed successfully")
 

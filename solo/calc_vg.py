@@ -5,6 +5,8 @@ Function to calculate van Genuchten parameters and SMRC
 import sys
 import os
 import arcpy
+import csv
+import numpy as np
 import LUCI_PTFs.lib.log as log
 import LUCI_PTFs.lib.common as common
 import LUCI_PTFs.lib.vanGenuchten as vanGenuchten
@@ -15,7 +17,7 @@ from LUCI_PTFs.lib.external import six # Python 2/3 compatibility module
 from LUCI_PTFs.lib.refresh_modules import refresh_modules
 refresh_modules([log, common, vanGenuchten, vg_PTFs, checks_PTFs])
 
-def function(outputFolder, inputShp, VGOption, MVGChoice, fieldFC, fieldSIC, fieldPWP, carbContent, carbonConFactor):
+def function(outputFolder, inputShp, VGOption, VGPressArray, MVGChoice, fieldFC, fieldSIC, fieldPWP, carbContent, carbonConFactor):
 
     try:
         # Set temporary variables
@@ -98,6 +100,102 @@ def function(outputFolder, inputShp, VGOption, MVGChoice, fieldFC, fieldSIC, fie
                             WC_satArray, alpha_VGArray, n_VGArray,
                             m_VGArray, nameArray, fcArray, sicArray, pwpArray)
 
+        ###############################################
+        ### Calculate water content using VG params ###
+        ###############################################
+
+        # Calculate water content at default pressures
+        WC_1kPaArray = []
+        WC_3kPaArray = []
+        WC_10kPaArray = []
+        WC_33kPaArray = []
+        WC_100kPaArray = []
+        WC_200kPaArray = []
+        WC_1000kPaArray = []
+        WC_1500kPaArray = []
+
+        for x in range(0, len(nameArray)):
+            WC_1kPa = vanGenuchten.calcVGfxn(1.0, WC_residualArray[x], WC_satArray[x], alpha_VGArray[x], n_VGArray[x], m_VGArray[x])
+            WC_3kPa = vanGenuchten.calcVGfxn(3.0, WC_residualArray[x], WC_satArray[x], alpha_VGArray[x], n_VGArray[x], m_VGArray[x])
+            WC_10kPa = vanGenuchten.calcVGfxn(10.0, WC_residualArray[x], WC_satArray[x], alpha_VGArray[x], n_VGArray[x], m_VGArray[x])
+            WC_33kPa = vanGenuchten.calcVGfxn(33.0, WC_residualArray[x], WC_satArray[x], alpha_VGArray[x], n_VGArray[x], m_VGArray[x])
+            WC_100kPa = vanGenuchten.calcVGfxn(100.0, WC_residualArray[x], WC_satArray[x], alpha_VGArray[x], n_VGArray[x], m_VGArray[x])
+            WC_200kPa = vanGenuchten.calcVGfxn(200.0, WC_residualArray[x], WC_satArray[x], alpha_VGArray[x], n_VGArray[x], m_VGArray[x])
+            WC_1000kPa = vanGenuchten.calcVGfxn(1000.0, WC_residualArray[x], WC_satArray[x], alpha_VGArray[x], n_VGArray[x], m_VGArray[x])
+            WC_1500kPa = vanGenuchten.calcVGfxn(1500.0, WC_residualArray[x], WC_satArray[x], alpha_VGArray[x], n_VGArray[x], m_VGArray[x])
+
+            WC_1kPaArray.append(WC_1kPa)
+            WC_3kPaArray.append(WC_3kPa)
+            WC_10kPaArray.append(WC_10kPa)
+            WC_33kPaArray.append(WC_33kPa)
+            WC_100kPaArray.append(WC_100kPa)
+            WC_200kPaArray.append(WC_200kPa)
+            WC_1000kPaArray.append(WC_1000kPa)
+            WC_1500kPaArray.append(WC_1500kPa)
+
+        outputFields = ["WC_1kPa", "WC_3kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_200kPa", "WC_1000kPa", "WC_1500kPa"]
+        common.writeFields(outputShp, outputFields)
+
+        recordNum = 0
+        with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+            for row in cursor:
+                row[0] = WC_1kPaArray[recordNum]
+                row[1] = WC_3kPaArray[recordNum]
+                row[2] = WC_10kPaArray[recordNum]
+                row[3] = WC_33kPaArray[recordNum]
+                row[4] = WC_100kPaArray[recordNum]
+                row[5] = WC_200kPaArray[recordNum]
+                row[6] = WC_1000kPaArray[recordNum]
+                row[7] = WC_1500kPaArray[recordNum]
+
+                cursor.updateRow(row)
+                recordNum += 1
+
+        log.info("Water content at default pressures written to output shapefile")
+
+        # Write water content at user-input pressures
+
+        # Initialise the pressure head array
+        x = np.array(VGPressArray)
+        vgPressures = x.astype(np.float)
+
+        # For the headings
+        headings = ['Name']
+
+        for pressure in vgPressures:
+            headName = 'WC_' + str(pressure) + "kPa"
+            headings.append(headName)
+
+        wcHeadings = headings[1:]
+
+        # Initialise water content arrays
+        wcArrays = []
+
+        # Calculate soil moisture content at custom VG pressures
+        for x in range(0, len(nameArray)):
+            wcValues = vanGenuchten.calcPressuresVG(nameArray[x], WC_residualArray[x], WC_satArray[x], alpha_VGArray[x], n_VGArray[x], m_VGArray[x], vgPressures)
+            wcArrays.append(wcValues)
+
+        # Write to output CSV
+        outCSV = os.path.join(outputFolder, 'WaterContent.csv')
+
+        with open(outCSV, 'wb') as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(headings)
+
+            for i in range(0, len(nameArray)):
+                row = wcArrays[i]
+                writer.writerow(row)
+
+            msg = 'Output CSV with water content saved to: ' + str(outCSV)
+            log.info(msg)
+
+        csv_file.close()
+
+        ##################################################
+        ### Calculate water content at critical points ###
+        ##################################################
+
         # Initialise water content arrays
         wc_satCalc = []
         wc_fcCalc = []
@@ -155,8 +253,12 @@ def function(outputFolder, inputShp, VGOption, MVGChoice, fieldFC, fieldSIC, fie
 
         log.info('Water contents for critical thresholds written to output shapefile')
 
+        ############################################
+        ### Calculate using Mualem-van Genuchten ###
+        ############################################
+
         if MVGChoice == True:
-            if VGOption in ["Wosten_1999_top", "Wosten_1999_top", "Weynants_2009"]:
+            if VGOption in ["Wosten_1999_top", "Wosten_1999_sub", "Weynants_2009"]:
                 # Allow for calculation of MVG
                 log.info("Calculating and plotting MVG")
 
@@ -173,6 +275,97 @@ def function(outputFolder, inputShp, VGOption, MVGChoice, fieldFC, fieldSIC, fie
 
                 # Plot MVG
                 vanGenuchten.plotMVG(outputFolder, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvGArray, WC_satArray, WC_residualArray, nameArray)
+
+                # Calculate K at default pressures
+                
+                # Calculate at the pressures using the function
+                K_1kPaArray = []
+                K_3kPaArray = []
+                K_10kPaArray = []
+                K_33kPaArray = []
+                K_100kPaArray = []
+                K_200kPaArray = []
+                K_1000kPaArray = []
+                K_1500kPaArray = []
+
+                for i in range(0, len(nameArray)):
+                    K_1kPa = vanGenuchten.calcKhfxn(1.0, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
+                    K_3kPa = vanGenuchten.calcKhfxn(3.0, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
+                    K_10kPa = vanGenuchten.calcKhfxn(10.0, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
+                    K_33kPa = vanGenuchten.calcKhfxn(33.0, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
+                    K_100kPa = vanGenuchten.calcKhfxn(100.0, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
+                    K_200kPa = vanGenuchten.calcKhfxn(200.0, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
+                    K_1000kPa = vanGenuchten.calcKhfxn(1000.0, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
+                    K_1500kPa = vanGenuchten.calcKhfxn(1500.0, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
+
+                    K_1kPaArray.append(K_1kPa)
+                    K_3kPaArray.append(K_3kPa)
+                    K_10kPaArray.append(K_10kPa)
+                    K_33kPaArray.append(K_33kPa)
+                    K_100kPaArray.append(K_100kPa)
+                    K_200kPaArray.append(K_200kPa)
+                    K_1000kPaArray.append(K_1000kPa)
+                    K_1500kPaArray.append(K_1500kPa)
+
+                # Write to the shapefile
+                MVGFields = ["K_1kPa", "K_3kPa", "K_10kPa", "K_33kPa", "K_100kPa", "K_200kPa", "K_1000kPa", "K_1500kPa"]
+                common.writeFields(outputShp, MVGFields)
+
+                recordNum = 0
+                with arcpy.da.UpdateCursor(outputShp, MVGFields) as cursor:
+                    for row in cursor:
+                        row[0] = K_1kPaArray[recordNum]
+                        row[1] = K_3kPaArray[recordNum]
+                        row[2] = K_10kPaArray[recordNum]
+                        row[3] = K_33kPaArray[recordNum]
+                        row[4] = K_100kPaArray[recordNum]
+                        row[5] = K_200kPaArray[recordNum]
+                        row[6] = K_1000kPaArray[recordNum]
+                        row[7] = K_1500kPaArray[recordNum]
+
+                        cursor.updateRow(row)
+                        recordNum += 1
+
+                log.info("Unsaturated hydraulic conductivity at default pressures written to output shapefile")
+
+                # Calculate K at custom pressures
+
+                # Initialise the pressure head array
+                x = np.array(VGPressArray)
+                vgPressures = x.astype(np.float)
+
+                # For the headings
+                headings = ['Name']
+
+                for pressure in vgPressures:
+                    headName = 'K_' + str(pressure) + "kPa"
+                    headings.append(headName)
+
+                kHeadings = headings[1:]
+
+                # Initialise K arrays
+                kArrays = []
+
+                # Calculate K content at custom VG pressures
+                for x in range(0, len(nameArray)):
+                    kValues = vanGenuchten.calcPressuresMVG(nameArray[x], K_satArray[x], alpha_VGArray[x], n_VGArray[x], m_VGArray[x], l_MvGArray[x], vgPressures)
+                    kArrays.append(kValues)
+                
+                # Write to output CSV
+                outCSV = os.path.join(outputFolder, 'K_MVG.csv')
+
+                with open(outCSV, 'wb') as csv_file:
+                    writer = csv.writer(csv_file)
+                    writer.writerow(headings)
+
+                    for i in range(0, len(nameArray)):
+                        row = kArrays[i]
+                        writer.writerow(row)
+
+                    msg = 'Output CSV with unsaturated hydraulic conductivity saved to: ' + str(outCSV)
+                    log.info(msg)
+
+                csv_file.close()
 
             else:
                 log.error("Selected PTF does not calculate Mualem-van Genuchten parameters")

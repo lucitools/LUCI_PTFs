@@ -101,7 +101,7 @@ class calcPoint_PTFs(object):
         # 4 PTF_of_choice
         param = arcpy.Parameter()
         param.name = u'PTF_of_choice'
-        param.displayName = u'PTF of choice'
+        param.displayName = u'PTFs of choice'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
@@ -135,7 +135,7 @@ class calcPoint_PTFs(object):
         # 6 SIC
         param = arcpy.Parameter()
         param.name = u'SIC'
-        param.displayName = u'Value of pressure (kPa) at water stress-induced stomatal closure'
+        param.displayName = u'Value of pressure (kPa) at water stress-induced stomata closure'
         param.parameterType = 'Optional'
         param.direction = 'Input'
         param.datatype = u'String'
@@ -176,7 +176,7 @@ class calcPoint_PTFs(object):
         # 10 Pressure_units_plot
         param = arcpy.Parameter()
         param.name = u'Pressure_units_plot'
-        param.displayName = u'Pressure units for plotting purposes'
+        param.displayName = u'Pressure unit for plotting purposes'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'

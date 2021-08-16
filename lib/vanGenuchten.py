@@ -76,7 +76,7 @@ def writeVGParams(outputShp, WC_residualArray, WC_satArray, alpha_VGArray, n_VGA
 
 def plotVG(outputFolder, WC_residualArray,
            WC_satArray, alpha_VGArray, n_VGArray,
-           m_VGArray, nameArray, fcArray, sicArray, pwpArray):
+           m_VGArray, nameArray, fcValue, sicValue, pwpValue):
     
     # Create Van Genuchten plots
     import matplotlib.pyplot as plt
@@ -117,25 +117,25 @@ def plotVG(outputFolder, WC_residualArray,
             pressureUnit = 'kPa'
             psi_plot = psi_kPa
 
-            fc_plot = fcArray
-            sic_plot = sicArray
-            pwp_plot = pwpArray
+            fc_plot = float(fcValue) * -1.0
+            sic_plot = float(sicValue) * -1.0
+            pwp_plot = float(pwpValue) * -1.0
 
         elif PTFUnit == 'cm':
             pressureUnit = 'cm'
             psi_plot = 10.0 * psi_kPa
 
-            fc_plot = [j * 10.0 for j in fcArray]
-            sic_plot = [j * 10.0 for j in sicArray]
-            pwp_plot = [j * 10.0 for j in pwpArray]
+            fc_plot = float(fcValue) * -10.0
+            sic_plot = float(sicValue) * -10.0
+            pwp_plot = float(pwpValue) * -10.0
 
         elif PTFUnit == 'm':
             pressureUnit = 'm'
             psi_plot = 0.1 * psi_kPa
 
-            fc_plot = [j * 0.1 for j in fcArray]
-            sic_plot = [j * 0.1 for j in sicArray]
-            pwp_plot = [j * 0.1 for j in pwpArray]
+            fc_plot = float(fcValue) * -0.1
+            sic_plot = float(sicValue) * -0.1
+            pwp_plot = float(pwpValue) * -0.1
 
         # Call check for theta at 0 vs theta_sat + 1%        
         theta_0kPa = calcVGfxn(0, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
@@ -167,9 +167,9 @@ def plotVG(outputFolder, WC_residualArray,
         # Plotting
         plt.plot(psi_neg, vg_WC, label=str(nameArray[i]))
         plt.xscale('symlog')
-        plt.axvline(x=-fc_plot[i], color='g', linestyle='dashed', label='FC')
-        plt.axvline(x=-sic_plot[i], color='m', linestyle='dashed', label='SIC')
-        plt.axvline(x=-pwp_plot[i], color='r', linestyle='dashed', label='PWP')
+        plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
+        plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
+        plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
         plt.xlabel('Pressure (' + str(pressureUnit) + ')')
         plt.ylabel('Volumetric water content')
         plt.ylim([wcBottom, wcTop])

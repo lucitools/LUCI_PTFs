@@ -54,7 +54,7 @@ class BrooksCorey(object):
             input_validation.checkFilePaths(self)
     
     def __init__(self):
-        self.label = u'Calculate using Brooks-Corey'
+        self.label = u'Calculate Brooks-Corey parameters and plot soil moisture retention curve'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -113,7 +113,47 @@ class BrooksCorey(object):
                              u'Saxton and Rawls (2006)']
         params.append(param)
 
-        # 5 Carbon_content
+        # 5 Pressure_heads_BC
+        param = arcpy.Parameter()
+        param.name = u'Pressure_heads_BC'
+        param.displayName = u'Specify pressures to calculate water content using Brooks-Corey model (space delimited)'
+        param.parameterType = 'Optional'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'1 3 10 33 100 200 1000 1500'
+        params.append(param)
+
+        # 6 FieldCapacity
+        param = arcpy.Parameter()
+        param.name = u'FieldCapacity'
+        param.displayName = u'Value of pressure (kPa) at field capacity'
+        param.parameterType = 'Optional'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'33'
+        params.append(param)
+
+        # 7 SIC
+        param = arcpy.Parameter()
+        param.name = u'SIC'
+        param.displayName = u'Value of pressure (kPa) at water stress-induced stomata closure'
+        param.parameterType = 'Optional'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'100'
+        params.append(param)
+
+        # 8 PWP
+        param = arcpy.Parameter()
+        param.name = u'PWP'
+        param.displayName = u'Value of pressure (kPa) at permanent wilting point'
+        param.parameterType = 'Optional'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'1500'
+        params.append(param)
+
+        # 9 Carbon_content
         param = arcpy.Parameter()
         param.name = u'Carbon_content'
         param.displayName = u'Carbon: Does your dataset contain organic carbon or organic matter?'
@@ -124,7 +164,7 @@ class BrooksCorey(object):
         param.filter.list = [u'Organic carbon', u'Organic matter']
         params.append(param)
 
-        # 6 Conversion_factor
+        # 10 Conversion_factor
         param = arcpy.Parameter()
         param.name = u'Conversion_factor'
         param.displayName = u'Carbon: enter a conversion factor'
@@ -134,7 +174,7 @@ class BrooksCorey(object):
         param.value = u'1.724'
         params.append(param)
 
-        # 7 Pressure_units_plot
+        # 11 Pressure_units_plot
         param = arcpy.Parameter()
         param.name = u'Pressure_units_plot'
         param.displayName = u'Pressure units for plotting purposes'
@@ -147,7 +187,7 @@ class BrooksCorey(object):
                              u'm']
         params.append(param)
 
-        # 8 Output_Layer_SoilParam
+        # 12 Output_Layer_SoilParam
         param = arcpy.Parameter()
         param.name = u'Output_Layer_SoilParam'
         param.displayName = u'Soil'

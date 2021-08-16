@@ -3,18 +3,21 @@ import arcpy
 import math
 import os
 import sys
+import numpy as np
+import csv
 import LUCI_PTFs.lib.log as log
 import LUCI_PTFs.lib.common as common
 import LUCI_PTFs.lib.thresholds as thresholds
 import LUCI_PTFs.lib.PTFdatabase as PTFdatabase
 import LUCI_PTFs.lib.brooksCorey as brooksCorey
 import LUCI_PTFs.lib.bc_PTFs as bc_PTFs
+import LUCI_PTFs.lib.checks_PTFs as checks_PTFs
 from LUCI_PTFs.lib.external import six # Python 2/3 compatibility module
 
 from LUCI_PTFs.lib.refresh_modules import refresh_modules
-refresh_modules([log, common, thresholds, PTFdatabase, brooksCorey, bc_PTFs])
+refresh_modules([log, common, thresholds, PTFdatabase, brooksCorey, bc_PTFs, checks_PTFs])
 
-def function(outputFolder, inputShp, PTFOption, carbContent, carbonConFactor):
+def function(outputFolder, inputShp, PTFOption, BCPressArray, fcVal, sicVal, pwpVal, carbContent, carbonConFactor):
 
     try:
         # Set temporary variables
@@ -79,6 +82,123 @@ def function(outputFolder, inputShp, PTFOption, carbContent, carbonConFactor):
             
         # Create plots
         brooksCorey.plotBrooksCorey(outputFolder, WC_res, WC_sat, hb_BC, lambda_BC, nameArray)
+
+        ###############################################
+        ### Calculate water content using BC params ###
+        ###############################################
+
+        # Calculate water content at default pressures
+        WC_1kPaArray = []
+        WC_3kPaArray = []
+        WC_10kPaArray = []
+        WC_33kPaArray = []
+        WC_100kPaArray = []
+        WC_200kPaArray = []
+        WC_1000kPaArray = []
+        WC_1500kPaArray = []
+
+        for x in range(0, len(nameArray)):
+
+            pressures = [1.0, 3.0, 10.0, 33.0, 100.0, 200.0, 1000.0, 1500.0]
+
+            bc_WC = brooksCorey.calcBrooksCoreyFXN(pressures, hb_BC[x], WC_res[x], WC_sat[x], lambda_BC[x])
+
+            WC_1kPaArray.append(bc_WC[0])
+            WC_3kPaArray.append(bc_WC[1])
+            WC_10kPaArray.append(bc_WC[2])
+            WC_33kPaArray.append(bc_WC[3])
+            WC_100kPaArray.append(bc_WC[4])
+            WC_200kPaArray.append(bc_WC[5])
+            WC_1000kPaArray.append(bc_WC[6])
+            WC_1500kPaArray.append(bc_WC[7])
+
+        common.writeOutputWC(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
+
+        # Write water content at user-input pressures
+
+        # Initialise the pressure head array
+        x = np.array(BCPressArray)
+        bcPressures = x.astype(np.float)
+
+        # For the headings
+        headings = ['Name']
+
+        for pressure in bcPressures:
+            headName = 'WC_' + str(pressure) + "kPa"
+            headings.append(headName)
+
+        wcHeadings = headings[1:]
+
+        wcArrays = []
+
+        # Calculate soil moisture content at custom VG pressures
+        for x in range(0, len(nameArray)):
+            wcValues = brooksCorey.calcBrooksCoreyFXN(bcPressures, hb_BC[x], WC_res[x], WC_sat[x], lambda_BC[x])
+            wcValues.insert(0, nameArray[x])
+
+            wcArrays.append(wcValues)
+
+        # Write to output CSV
+        outCSV = os.path.join(outputFolder, 'WaterContent.csv')
+
+        with open(outCSV, 'wb') as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(headings)
+
+            for i in range(0, len(nameArray)):
+                row = wcArrays[i]
+                writer.writerow(row)
+
+            msg = 'Output CSV with water content saved to: ' + str(outCSV)
+            log.info(msg)
+
+        csv_file.close()
+
+        ##################################################
+        ### Calculate water content at critical points ###
+        ##################################################
+
+        # Initialise water content arrays
+        wc_satCalc = []
+        wc_fcCalc = []
+        wc_sicCalc = []
+        wc_pwpCalc = []
+
+        wc_DW = []
+        wc_RAW = []
+        wc_NRAW = []
+        wc_PAW = []
+
+        wcCriticalPressures = [0.0, fcVal, sicVal, pwpVal]
+
+        for x in range(0, len(nameArray)):
+            wcCriticals = brooksCorey.calcBrooksCoreyFXN(wcCriticalPressures, hb_BC[x], WC_res[x], WC_sat[x], lambda_BC[x])
+
+            wc_sat = wcCriticals[0]
+            wc_fc = wcCriticals[1]
+            wc_sic = wcCriticals[2]
+            wc_pwp = wcCriticals[3]
+
+            drainWater = wc_sat - wc_fc
+            readilyAvailWater = wc_fc - wc_sic
+            notRAW = wc_sic - wc_pwp
+            PAW = wc_fc - wc_pwp
+
+            checks_PTFs.checkNegValue("Drainable water", drainWater, nameArray[i])
+            checks_PTFs.checkNegValue("Readily available water", readilyAvailWater, nameArray[i])
+            checks_PTFs.checkNegValue("Not readily available water", notRAW, nameArray[i])
+            checks_PTFs.checkNegValue("Not readily available water", PAW, nameArray[i])
+
+            wc_satCalc.append(wc_sat)
+            wc_fcCalc.append(wc_fc)
+            wc_sicCalc.append(wc_sic)
+            wc_pwpCalc.append(wc_pwp)
+            wc_DW.append(drainWater)
+            wc_RAW.append(readilyAvailWater)
+            wc_NRAW.append(notRAW)
+            wc_PAW.append(PAW)
+
+        common.writeOutputCriticalWC(outputShp, wc_satCalc, wc_fcCalc, wc_sicCalc, wc_pwpCalc, wc_DW, wc_RAW, wc_NRAW, wc_PAW)
 
     except Exception:
         arcpy.AddError("Brooks-Corey function failed")

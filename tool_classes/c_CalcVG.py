@@ -115,38 +115,41 @@ class calcVG_PTFs(object):
         # 5 Pressure_heads_VG
         param = arcpy.Parameter()
         param.name = u'Pressure_heads_VG'
-        param.displayName = u'Specify pressures to calculate water content using van Genuchten (space delimited)'
+        param.displayName = u'Specify pressures to calculate water content using van Genuchten and hydraulic conductivity using Mualem-van Genuchten model (space delimited)'
         param.parameterType = 'Optional'
         param.direction = 'Input'
         param.datatype = u'String'
         param.value = u'1 3 10 33 100 200 1000 1500'
         params.append(param)
 
-        # 6 Field_FC
+        # 6 FieldCapacity
         param = arcpy.Parameter()
-        param.name = u'Field_FC'
-        param.displayName = u'Field containing pressure (kPa) at field capacity'
-        param.parameterType = 'Required'
-        param.direction = 'Input'
-        param.datatype = u'String'
-        params.append(param)
-
-        # 7 Field_SIC
-        param = arcpy.Parameter()
-        param.name = u'Field_SIC'
-        param.displayName = u'Field containing pressure (kPa) at water stress-induced stomatal closure'
+        param.name = u'FieldCapacity'
+        param.displayName = u'Value of pressure (kPa) at field capacity'
         param.parameterType = 'Optional'
         param.direction = 'Input'
         param.datatype = u'String'
+        param.value = u'33'
         params.append(param)
 
-        # 8 Field_PWP
+        # 7 SIC
         param = arcpy.Parameter()
-        param.name = u'Field_PWP'
-        param.displayName = u'Field containing pressure (kPa) at permanent wilting point'
+        param.name = u'SIC'
+        param.displayName = u'Value of pressure (kPa) at water stress-induced stomata closure'
         param.parameterType = 'Optional'
         param.direction = 'Input'
         param.datatype = u'String'
+        param.value = u'100'
+        params.append(param)
+
+        # 8 PWP
+        param = arcpy.Parameter()
+        param.name = u'PWP'
+        param.displayName = u'Value of pressure (kPa) at permanent wilting point'
+        param.parameterType = 'Optional'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'1500'
         params.append(param)        
 
         # 9 Carbon_content
@@ -173,7 +176,7 @@ class calcVG_PTFs(object):
         # 11 Pressure_units_plot
         param = arcpy.Parameter()
         param.name = u'Pressure_units_plot'
-        param.displayName = u'Pressure units for plotting purposes'
+        param.displayName = u'Pressure unit for plotting purposes'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'

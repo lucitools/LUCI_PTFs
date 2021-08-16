@@ -39,7 +39,7 @@ def calcBrooksCoreyFXN(pressure, hb_BC, theta_r, theta_s, lambda_BC):
             # bc_WC = theta_r + ((theta_s - theta_r) * (hb_BC / float(pressureVal)) ** lambda_BC)
             # bc_WC = theta_r + (theta_s - theta_r) * (hb_BC / float(pressureVal) ** lambda_BC)
 
-            bc_WC = theta_r + (theta_s - theta_r) * (hb_BC/ float(pressureVal)) ** lambda_BC
+            bc_WC = theta_r + (theta_s - theta_r) * (hb_BC / float(pressureVal)) ** lambda_BC
 
             bcArray.append(bc_WC)
 

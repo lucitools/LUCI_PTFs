@@ -20,9 +20,13 @@ def function(params):
         outputFolder = pText[2]
         inputShapefile = pText[3]
         PTFChoice = pText[4]
-        carbonContent = pText[5]
-        carbonConFactor = pText[6]
-        unitsPlot = pText[7]
+        BCPressures = pText[5]
+        fcVal = pText[6]
+        sicVal = pText[7]
+        pwpVal = pText[8]
+        carbonContent = pText[9]
+        carbonConFactor = pText[10]
+        unitsPlot = pText[11]
 
         # Create output folder
         if not os.path.exists(outputFolder):
@@ -75,6 +79,12 @@ def function(params):
             log.error('Invalid carbon content option')
             sys.exit()
 
+        # Unpack 'BC pressure heads' parameter
+        if BCPressures is None:
+            BCPressArray = []
+        else:
+            BCPressArray = BCPressures.split(' ')
+
         # Pull out PTFinfo
         PTFInfo = PTFdatabase.checkPTF(PTFOption)
         PTFType = PTFInfo.PTFType
@@ -90,11 +100,13 @@ def function(params):
         common.writeXML(PTFXML, PTFOut)
 
         # Call Brooks-Corey function
-        brooks_corey.function(outputFolder, inputShapefile, PTFOption, carbContent, carbonConFactor)
+        brooks_corey.function(outputFolder, inputShapefile, PTFOption,
+                              BCPressArray, fcVal, sicVal, pwpVal,
+                              carbContent, carbonConFactor)
 
         # Set output filename for display
         BCOut = os.path.join(outputFolder, "BrooksCorey.shp")
-        arcpy.SetParameter(8, BCOut)
+        arcpy.SetParameter(12, BCOut)
 
         log.info("Brooks-Corey operations completed successfully")
 

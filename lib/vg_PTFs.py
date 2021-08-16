@@ -454,8 +454,9 @@ def Dashtaki_2010(outputShp, VGOption, carbonConFactor, carbContent):
         WC_residual = 0.034 + (0.0032 * clayPerc[x])
         WC_sat = 0.85 - (0.00061 * sandPerc[x]) - (0.258 * BDg_cm3[x])
         
-        # Alpha in kPa-1 (no conversion needed)
-        alpha_VG = abs(1/(- 476 - (4.1 * sandPerc[x]) + (499 * BDg_cm3[x])))
+        # Alpha in cm-1
+        alpha_cm = abs(1/(- 476 - (4.1 * sandPerc[x]) + (499 * BDg_cm3[x])))
+        alpha_VG = 10.0 * alpha_cm # Converted from cm-1 to kPa-1 for internal consistency
         
         n_VG = 1.56 - (0.00228 * sandPerc[x])
         m_VG = 1.0 - (1.0 / float(n_VG))

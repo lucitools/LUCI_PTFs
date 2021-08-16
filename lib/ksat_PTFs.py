@@ -158,7 +158,7 @@ def Jabro_1992(outputFolder, outputShp):
         warningFlag = checks_PTFs.checkValue("Bulk density", BDg_cm3[x], record[x])
         warningArray.append(warningFlag)
 
-        K_sat = 10**(9.56 - (0.81 * math.log(siltPerc[x], 10.0)) - (1.09 * math.log(clayPerc[x], 10.0)) - (4.64 * BDg_cm3[x])) * (10.0 / 24.0)
+        K_sat = 10**(9.56 - (0.81 * math.log(siltPerc[x], 10.0)) - (1.09 * math.log(clayPerc[x], 10.0)) - (4.64 * BDg_cm3[x])) * 10.0
 
         checks_PTFs.checkValue("Ksat", K_sat, record[x])
 

@@ -17,35 +17,17 @@ from LUCI_PTFs.lib.external import six # Python 2/3 compatibility module
 from LUCI_PTFs.lib.refresh_modules import refresh_modules
 refresh_modules([log, common, vanGenuchten, vg_PTFs, checks_PTFs])
 
-def function(outputFolder, inputShp, VGOption, VGPressArray, MVGChoice, fieldFC, fieldSIC, fieldPWP, carbContent, carbonConFactor):
+def function(outputFolder, inputShp, VGOption, VGPressArray, MVGChoice, fcVal, sicVal, pwpVal, carbContent, carbonConFactor):
 
     try:
         # Set temporary variables
         prefix = os.path.join(arcpy.env.scratchGDB, "soil_")
-
-        # Check the fields at important thresholds
-        fcArray, sicArray, pwpArray = checks_PTFs.pressureFields(outputFolder, inputShp, fieldFC, fieldSIC, fieldPWP)
 
         # Set output filename
         outputShp = os.path.join(outputFolder, "soil_vg.shp")
 
         # Copy the input shapefile to the output folder
         arcpy.CopyFeatures_management(inputShp, outputShp)
-
-        # Write values for FC, SIC, and PWP to output shapefile
-        common.writeFields(outputShp, ["fc_kPa", "sic_kPa", "pwp_kPa"])
-
-        recordNum = 0
-        with arcpy.da.UpdateCursor(outputShp, ["fc_kPa", "sic_kPa", "pwp_kPa"]) as cursor:
-            for row in cursor:
-                row[0] = fcArray[recordNum]
-                row[1] = sicArray[recordNum]
-                row[2] = pwpArray[recordNum]
-
-                cursor.updateRow(row)
-                recordNum += 1
-
-        log.info("Pressure values at important thresholds written to output shapefile")
 
         ##############################################
         ### Calculate the van Genuchten parameters ###
@@ -98,7 +80,7 @@ def function(outputFolder, inputShp, VGOption, VGPressArray, MVGChoice, fieldFC,
         # Plot VG parameters
         vanGenuchten.plotVG(outputFolder, WC_residualArray,
                             WC_satArray, alpha_VGArray, n_VGArray,
-                            m_VGArray, nameArray, fcArray, sicArray, pwpArray)
+                            m_VGArray, nameArray, fcVal, sicVal, pwpVal)
 
         ###############################################
         ### Calculate water content using VG params ###
@@ -133,25 +115,7 @@ def function(outputFolder, inputShp, VGOption, VGPressArray, MVGChoice, fieldFC,
             WC_1000kPaArray.append(WC_1000kPa)
             WC_1500kPaArray.append(WC_1500kPa)
 
-        outputFields = ["WC_1kPa", "WC_3kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_200kPa", "WC_1000kPa", "WC_1500kPa"]
-        common.writeFields(outputShp, outputFields)
-
-        recordNum = 0
-        with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
-            for row in cursor:
-                row[0] = WC_1kPaArray[recordNum]
-                row[1] = WC_3kPaArray[recordNum]
-                row[2] = WC_10kPaArray[recordNum]
-                row[3] = WC_33kPaArray[recordNum]
-                row[4] = WC_100kPaArray[recordNum]
-                row[5] = WC_200kPaArray[recordNum]
-                row[6] = WC_1000kPaArray[recordNum]
-                row[7] = WC_1500kPaArray[recordNum]
-
-                cursor.updateRow(row)
-                recordNum += 1
-
-        log.info("Water content at default pressures written to output shapefile")
+        common.writeOutputWC(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray)
 
         # Write water content at user-input pressures
 
@@ -209,9 +173,9 @@ def function(outputFolder, inputShp, VGOption, VGPressArray, MVGChoice, fieldFC,
 
         for i in range(0, len(nameArray)):
             wc_sat = vanGenuchten.calcVGfxn(0, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
-            wc_fc = vanGenuchten.calcVGfxn(fcArray[i], WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
-            wc_sic = vanGenuchten.calcVGfxn(sicArray[i], WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
-            wc_pwp = vanGenuchten.calcVGfxn(pwpArray[i], WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
+            wc_fc = vanGenuchten.calcVGfxn(float(fcVal), WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
+            wc_sic = vanGenuchten.calcVGfxn(float(sicVal), WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
+            wc_pwp = vanGenuchten.calcVGfxn(float(pwpVal), WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
 
             drainWater = wc_sat - wc_fc
             readilyAvailWater = wc_fc - wc_sic
@@ -232,26 +196,7 @@ def function(outputFolder, inputShp, VGOption, VGPressArray, MVGChoice, fieldFC,
             wc_NRAW.append(notRAW)
             wc_PAW.append(PAW)
 
-        # Save to shapefile
-        wcFields = ["wc_satCalc", "wc_fcCalc", "wc_sicCalc", "wc_pwpCalc", "wc_DW", "wc_RAW", "wc_NRAW", "wc_PAW"]
-        common.writeFields(outputShp, wcFields)
-
-        recordNum = 0
-        with arcpy.da.UpdateCursor(outputShp, wcFields) as cursor:
-            for row in cursor:
-                row[0] = wc_satCalc[recordNum]
-                row[1] = wc_fcCalc[recordNum]
-                row[2] = wc_sicCalc[recordNum]
-                row[3] = wc_pwpCalc[recordNum]
-                row[4] = wc_DW[recordNum]
-                row[5] = wc_RAW[recordNum]
-                row[6] = wc_NRAW[recordNum]
-                row[7] = wc_PAW[recordNum]
-
-                cursor.updateRow(row)
-                recordNum += 1
-
-        log.info('Water contents for critical thresholds written to output shapefile')
+        common.writeOutputCriticalWC(outputShp, wc_satCalc, wc_fcCalc, wc_sicCalc, wc_pwpCalc, wc_DW, wc_RAW, wc_NRAW, wc_PAW)
 
         ############################################
         ### Calculate using Mualem-van Genuchten ###
@@ -309,7 +254,10 @@ def function(outputFolder, inputShp, VGOption, VGPressArray, MVGChoice, fieldFC,
 
                 # Write to the shapefile
                 MVGFields = ["K_1kPa", "K_3kPa", "K_10kPa", "K_33kPa", "K_100kPa", "K_200kPa", "K_1000kPa", "K_1500kPa"]
-                common.writeFields(outputShp, MVGFields)
+                
+                # Add fields
+                for field in MVGFields:
+                    arcpy.AddField_management(outputShp, field, "DOUBLE", 10, 6)
 
                 recordNum = 0
                 with arcpy.da.UpdateCursor(outputShp, MVGFields) as cursor:

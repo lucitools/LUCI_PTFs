@@ -170,6 +170,17 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
             wcFields.append("wc_satCalc")
             wcArrays.append(wc_satCalc)
 
+            # Add sat field to output shapefile
+            arcpy.AddField_management(outputShp, "wc_satCalc", "DOUBLE", 10, 6)
+
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, "wc_satCalc") as cursor:
+                for row in cursor:
+                    row[0] = wc_satCalc[recordNum]
+
+                    cursor.updateRow(row)
+                    recordNum += 1
+
         else:
             log.warning('Field with WC at saturation not found')
             satStatus = False
@@ -187,6 +198,17 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
             wcFields.append("wc_fcCalc")
             wcArrays.append(wc_fcCalc)
 
+            # Add FC field to output shapefile
+            arcpy.AddField_management(outputShp, "wc_fcCalc", "DOUBLE", 10, 6)
+
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, "wc_fcCalc") as cursor:
+                for row in cursor:
+                    row[0] = wc_fcCalc[recordNum]
+
+                    cursor.updateRow(row)
+                    recordNum += 1
+
         else:
             log.warning('Field with WC at field capacity not found')
             fcStatus = False
@@ -203,6 +225,17 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
 
             wcFields.append("wc_sicCalc")
             wcArrays.append(wc_sicCalc)
+
+            # Add sic field to output shapefile
+            arcpy.AddField_management(outputShp, "wc_sicCalc", "DOUBLE", 10, 6)
+
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, "wc_sicCalc") as cursor:
+                for row in cursor:
+                    row[0] = wc_sicCalc[recordNum]
+
+                    cursor.updateRow(row)
+                    recordNum += 1
 
         else:
             log.warning('Field with WC at water stress-induced stomatal closure not found')
@@ -230,6 +263,17 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
             wcFields.append("wc_pwpCalc")
             wcArrays.append(wc_pwpCalc)
 
+            # Add pwp field to output shapefile
+            arcpy.AddField_management(outputShp, "wc_pwpCalc", "DOUBLE", 10, 6)
+
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, "wc_pwpCalc") as cursor:
+                for row in cursor:
+                    row[0] = wc_pwpCalc[recordNum]
+
+                    cursor.updateRow(row)
+                    recordNum += 1
+
         else:
             log.warning('Field with WC at permanent wilting point not found')
             
@@ -249,6 +293,17 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
             wcFields.append("wc_DW")
             wcArrays.append(drainWater)
 
+            # Add DW field to output shapefile
+            arcpy.AddField_management(outputShp, "wc_DW", "DOUBLE", 10, 6)
+
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, "wc_DW") as cursor:
+                for row in cursor:
+                    row[0] = drainWater[recordNum]
+
+                    cursor.updateRow(row)
+                    recordNum += 1
+
         if fcStatus == True and sicStatus == True:
             # readilyAvailWater = wc_fc - wc_sic
             RAW = point_PTFs.calcWaterContent(wc_fcCalc, wc_sicCalc, 'readily available water', nameArray)
@@ -256,6 +311,17 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
 
             wcFields.append("wc_RAW")
             wcArrays.append(RAW)
+
+            # Add wc_RAW field to output shapefile
+            arcpy.AddField_management(outputShp, "wc_RAW", "DOUBLE", 10, 6)
+
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, "wc_RAW") as cursor:
+                for row in cursor:
+                    row[0] = RAW[recordNum]
+
+                    cursor.updateRow(row)
+                    recordNum += 1
 
         if sicStatus == True and pwpStatus == True:
             # notRAW = wc_sic - wc_pwp
@@ -265,6 +331,17 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
             wcFields.append("wc_NRAW")
             wcArrays.append(NRAW)
 
+            # Add sat field to output shapefile
+            arcpy.AddField_management(outputShp, "wc_NRAW", "DOUBLE", 10, 6)
+
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, "wc_NRAW") as cursor:
+                for row in cursor:
+                    row[0] = NRAW[recordNum]
+
+                    cursor.updateRow(row)
+                    recordNum += 1
+
         if fcStatus == True and pwpStatus == True:
             # PAW = wc_fc - wc_pwp
             PAW = point_PTFs.calcWaterContent(wc_fcCalc, wc_pwpCalc, 'plant available water', nameArray)
@@ -273,28 +350,16 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
             wcFields.append("wc_PAW")
             wcArrays.append(PAW)
 
-        # Rearrange arrays
-        waterContents = []
+            # Add sat field to output shapefile
+            arcpy.AddField_management(outputShp, "wc_PAW", "DOUBLE", 10, 6)
 
-        for j in range(0, len(nameArray)):
-            WC = []
-            for i in range(0, len(wcArrays)):
-                water = wcArrays[i][j]
-                WC.append(water)
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, "wc_PAW") as cursor:
+                for row in cursor:
+                    row[0] = PAW[recordNum]
 
-            waterContents.append(WC)
-
-        # Write fields to output shapefile
-        common.writeFields(outputShp, wcFields)
-
-        recordNum = 0
-        with arcpy.da.UpdateCursor(outputShp, wcFields) as cursor:
-            for row in cursor:
-                for i in range(0, len(waterContents[recordNum])):
-                    row[i] = waterContents[recordNum][i]
-
-                cursor.updateRow(row)
-                recordNum += 1
+                    cursor.updateRow(row)
+                    recordNum += 1
 
         log.info('Water contents at critical thresholds written to output shapefile')
 

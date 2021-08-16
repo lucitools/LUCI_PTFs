@@ -488,3 +488,67 @@ def getOIDField(shapefile):
     OID = str(arcpy.Describe(shapefile).oidFieldName)
 
     return OID
+
+def writeOutputWC(outputShp, WC_1kPaArray, WC_3kPaArray, WC_10kPaArray, WC_33kPaArray, WC_100kPaArray, WC_200kPaArray, WC_1000kPaArray, WC_1500kPaArray):
+    # Write outputs of VG or BC equations to output shapefile
+
+    # Add fields
+    arcpy.AddField_management(outputShp, "WC_1kPa", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "WC_3kPa", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "WC_10kPa", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "WC_33kPa", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "WC_100kPa", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "WC_200kPa", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "WC_1000kPa", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "WC_1500kPa", "DOUBLE", 10, 6)
+
+    outputFields = ["WC_1kPa", "WC_3kPa", "WC_10kPa", "WC_33kPa", "WC_100kPa", "WC_200kPa", "WC_1000kPa", "WC_1500kpa"]
+
+    recordNum = 0
+    with arcpy.da.UpdateCursor(outputShp, outputFields) as cursor:
+        for row in cursor:
+            row[0] = WC_1kPaArray[recordNum]
+            row[1] = WC_3kPaArray[recordNum]
+            row[2] = WC_10kPaArray[recordNum]
+            row[3] = WC_33kPaArray[recordNum]
+            row[4] = WC_100kPaArray[recordNum]
+            row[5] = WC_200kPaArray[recordNum]
+            row[6] = WC_1000kPaArray[recordNum]
+            row[7] = WC_1500kPaArray[recordNum]
+
+            cursor.updateRow(row)
+            recordNum += 1
+
+    log.info("Water content at default pressures written to output shapefile")
+
+def writeOutputCriticalWC(outputShp, wc_sat, wc_fc, wc_sic, wc_pwp, wc_DW, wc_RAW, wc_NRAW, wc_PAW):
+
+    # Add fields
+    arcpy.AddField_management(outputShp, "wc_satCalc", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "wc_fcCalc", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "wc_sicCalc", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "wc_pwpCalc", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "wc_DW", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "wc_RAW", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "wc_NRAW", "DOUBLE", 10, 6)
+    arcpy.AddField_management(outputShp, "wc_PAW", "DOUBLE", 10, 6)
+
+    wcFields = ["wc_satCalc", "wc_fcCalc", "wc_sicCalc", "wc_pwpCalc", "wc_DW", "wc_RAW", "wc_NRAW", "wc_PAW"]
+
+    recordNum = 0
+    with arcpy.da.UpdateCursor(outputShp, wcFields) as cursor:
+        for row in cursor:
+            row[0] = wc_sat[recordNum]
+            row[1] = wc_fc[recordNum]
+            row[2] = wc_sic[recordNum]
+            row[3] = wc_pwp[recordNum]
+            row[4] = wc_DW[recordNum]
+            row[5] = wc_RAW[recordNum]
+            row[6] = wc_NRAW[recordNum]
+            row[7] = wc_PAW[recordNum]
+
+            cursor.updateRow(row)
+            recordNum += 1
+
+    log.info('Water contents for critical thresholds written to output shapefile')
+

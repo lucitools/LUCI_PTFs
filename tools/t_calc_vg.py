@@ -22,9 +22,9 @@ def function(params):
         inputShapefile = pText[3]
         VGChoice = pText[4]
         VGPressures = pText[5]
-        fieldFC = pText[6]
-        fieldSIC = pText[7]
-        fieldPWP = pText[8]
+        fcVal = pText[6]
+        sicVal = pText[7]
+        pwpVal = pText[8]
         carbonContent = pText[9]
         carbonConFactor = pText[10]
         unitsPlot = pText[11]
@@ -101,7 +101,7 @@ def function(params):
 
         # Call van Genuchten function
         calc_vg.function(outputFolder, inputShapefile, VGOption, VGPressArray,
-                         MVGChoice, fieldFC, fieldSIC, fieldPWP,
+                         MVGChoice, fcVal, sicVal, pwpVal,
                          carbContent, carbonConFactor)
 
         # Loading shapefile automatically

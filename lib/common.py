@@ -438,25 +438,13 @@ def writeFields(outputShp, fieldArray):
 
     # Writes fields to the outputShp
 
-    class Field:
-        def __init__(self, name, type, precision=None):
-            self.name = name
-            self.type = type
-            self.precision = precision
+    # Write warning fields
+    arcpy.AddField_management(outputShp, "warning", "TEXT")
 
- 
-    fieldList = []
+    # Write the rest of the fields (1 to end)
 
-    for field in fieldArray:
-        if field == "warning":
-            fieldList.append(Field("warning", 'TEXT'))
-
-        else:
-            fieldList.append(Field(field, 'DOUBLE', '10'))
-
-    # Create fields in output shapefile
-    for f in fieldList:
-        arcpy.AddField_management(outputShp, f.name, f.type, f.precision)
+    for x in range(1, len(fieldArray)):
+        arcpy.AddField_management(outputShp, fieldArray[x], "DOUBLE", 10, 6)
 
 def getInputValue(folder, paramName):
  

@@ -70,7 +70,7 @@ def writeBCParams(outputShp, warning, WC_res, WC_sat, lambda_BC, hb_BC):
             cursor.updateRow(row)
             recordNum += 1
 
-def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray, nameArray):
+def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray, nameArray, fcValue, sicValue, pwpValue):
     # Create Brooks-Corey plots
     import matplotlib.pyplot as plt
     import numpy as np
@@ -99,6 +99,61 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
             pressureUnit = 'kPa'
             psi_plot = psi_kPa
 
+            fc_plot = float(fcValue) * -1.0
+            sic_plot = float(sicValue) * -1.0
+            pwp_plot = float(pwpValue) * -1.0
+
+        elif PTFUnit == 'cm':
+            pressureUnit = 'cm'
+            psi_plot = 10.0 * psi_kPa
+
+            fc_plot = float(fcValue) * -10.0
+            sic_plot = float(sicValue) * -10.0
+            pwp_plot = float(pwpValue) * -10.0
+
+        elif PTFUnit == 'm':
+            pressureUnit = 'm'
+            psi_plot = 0.1 * psi_kPa
+
+            fc_plot = float(fcValue) * -0.1
+            sic_plot = float(sicValue) * -0.1
+            pwp_plot = float(pwpValue) * -0.1
+
+        # Convert psi_plot to negative for plotting
+        psi_neg = -1.0 * psi_plot
+
+        plt.plot(psi_neg, bc_WC, label=str(nameArray[i]))        
+        plt.xscale('symlog')
+        plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
+        plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
+        plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
+        plt.legend(loc="best")
+        plt.title(title)
+        plt.xlabel('Pressure (' + str(pressureUnit) + ')')
+        plt.ylabel('Volumetric water content')
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created for soil ' + str(nameArray[i]))
+
+    #########################
+    ### Plot 1: all soils ###
+    #########################
+
+    outPath = os.path.join(outputFolder, 'plotBC_logPressure.png')
+    title = 'Brooks-Corey plots of ' + str(len(nameArray)) + ' soils (log scale)'
+
+    # Define pressure vector 
+    psi_kPa = np.linspace(0.0, 1500.0, 1500)
+
+    for i in range(0, len(nameArray)):
+
+        # Calculate WC over pressure vector 
+        bc_WC = calcBrooksCoreyFXN(psi_kPa, hbArray[i], WC_resArray[i], WC_satArray[i], lambdaArray[i])
+        
+        if PTFUnit == 'kPa':
+            pressureUnit = 'kPa'
+            psi_plot = psi_kPa
+
         elif PTFUnit == 'cm':
             pressureUnit = 'cm'
             psi_plot = 10.0 * psi_kPa
@@ -107,15 +162,19 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
             pressureUnit = 'm'
             psi_plot = 0.1 * psi_kPa
 
-        # Convert psi_plot to negative for plotting
+        # Convert psi to negative for plotting purposes
         psi_neg = -1.0 * psi_plot
 
-        plt.plot(psi_neg, bc_WC, label=str(nameArray[i]))        
-        plt.xscale('symlog')
-        plt.legend(loc="best")
-        plt.title(title)
-        plt.xlabel('Pressure (' + str(pressureUnit) + ')')
-        plt.ylabel('Volumetric water content')
-        plt.savefig(outPath, transparent=False)
-        plt.close()
-        log.info('Plot created for soil ' + str(nameArray[i]))
+        plt.plot(psi_neg, bc_WC, label=str(nameArray[i]))
+    
+    plt.xscale('symlog')
+    plt.title(title)
+    plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
+    plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
+    plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
+    plt.ylabel('Water content')
+    plt.xlabel('Pressure (' + str(pressureUnit) + ')')
+    plt.legend(ncol=2, fontsize=12, loc="best")
+    plt.savefig(outPath, transparent=False)
+    plt.close()
+    log.info('Plot created with water content on the y-axis')

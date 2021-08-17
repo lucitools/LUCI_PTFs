@@ -66,22 +66,9 @@ def function(outputFolder, inputShp, PTFOption, BCPressArray, fcVal, sicVal, pwp
         brooksCorey.writeBCParams(outputShp, warning, WC_res, WC_sat, lambda_BC, hb_BC)
 
         log.info("Brooks-Corey parameters written to output shapefile")
-
-        '''
-        # DEBUG: Printint out water content
-        for x in range(0, len(nameArray)):
-            log.info("DEBUG: nameArray: " + str(nameArray[x]))
-
-            pressures = [1.0, 3.0, 6.0, 10.0, 20.0, 33.0, 100.0, 1500.0]
-
-            bc_WC = brooksCorey.calcBrooksCoreyFXN(pressures, hb_BC[x], WC_res[x], WC_sat[x], lambda_BC[x])
-
-            log.info("DEBUG: pressures: " + str(pressures))
-            log.info("DEBUG: bc_WC: " + str(bc_WC))
-        '''
             
         # Create plots
-        brooksCorey.plotBrooksCorey(outputFolder, WC_res, WC_sat, hb_BC, lambda_BC, nameArray)
+        brooksCorey.plotBrooksCorey(outputFolder, WC_res, WC_sat, hb_BC, lambda_BC, nameArray, fcVal, sicVal, pwpVal)
 
         ###############################################
         ### Calculate water content using BC params ###

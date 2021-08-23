@@ -105,8 +105,9 @@ class BrooksCorey(object):
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
-        param.value = u'Cosby et al. (1984) - Sand, Silt and Clay'
-        param.filter.list = [u'Cosby et al. (1984) - Sand, Silt and Clay',
+        param.value = u'Cosby et al. (1984) - Sand and Clay'
+        param.filter.list = [u'Cosby et al. (1984) - Sand and Clay', 
+                             u'Cosby et al. (1984) - Sand, Silt and Clay',
                              u'Rawls and Brakensiek (1985)',
                              u'Campbell and Shiozawa (1992)',
                              u'Saxton et al. (1986)',

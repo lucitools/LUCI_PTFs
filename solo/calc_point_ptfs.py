@@ -280,9 +280,9 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
             pwpStatus = False        
 
         drainWater = []
+        PAW = []
         RAW = []
         NRAW = []
-        PAW = []
 
         if satStatus == True and fcStatus == True:
             # drainWater = wc_sat - wc_fc
@@ -304,6 +304,27 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
                     cursor.updateRow(row)
                     recordNum += 1
 
+        if fcStatus == True and pwpStatus == True:
+            # PAW = wc_fc - wc_pwp
+            PAW = point_PTFs.calcWaterContent(wc_fcCalc, wc_pwpCalc, 'plant available water', nameArray)
+            log.info('Plant available water calculated')
+
+            wcFields.append("wc_PAW")
+            wcArrays.append(PAW)
+
+            # Add PAW field to output shapefile
+            arcpy.AddField_management(outputShp, "wc_PAW", "DOUBLE", 10, 6)
+
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, "wc_PAW") as cursor:
+                for row in cursor:
+                    row[0] = PAW[recordNum]
+
+                    cursor.updateRow(row)
+                    recordNum += 1
+
+            pawStatus = True
+
         if fcStatus == True and sicStatus == True:
             # readilyAvailWater = wc_fc - wc_sic
             RAW = point_PTFs.calcWaterContent(wc_fcCalc, wc_sicCalc, 'readily available water', nameArray)
@@ -323,6 +344,29 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
                     cursor.updateRow(row)
                     recordNum += 1
 
+        elif pawStatus == True:
+            # If PAW exists, get RAW = 0.5 * RAW
+            PAW = point_PTFs.calcWaterContent(wc_fcCalc, wc_pwpCalc, 'plant available water', nameArray)
+            
+            RAW = [(float(i) * 0.5) for i in PAW]
+            log.info('Readily available water calculated based on PAW')
+
+            wcFields.append("wc_RAW")
+            wcArrays.append(RAW)
+
+            # Add wc_RAW field to output shapefile
+            arcpy.AddField_management(outputShp, "wc_RAW", "DOUBLE", 10, 6)
+
+            recordNum = 0
+            with arcpy.da.UpdateCursor(outputShp, "wc_RAW") as cursor:
+                for row in cursor:
+                    row[0] = RAW[recordNum]
+
+                    cursor.updateRow(row)
+                    recordNum += 1
+        else:
+            log.info('Readily available water not calculated')
+
         if sicStatus == True and pwpStatus == True:
             # notRAW = wc_sic - wc_pwp
             NRAW = point_PTFs.calcWaterContent(wc_sicCalc, wc_pwpCalc, 'not readily available water', nameArray)
@@ -338,25 +382,6 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
             with arcpy.da.UpdateCursor(outputShp, "wc_NRAW") as cursor:
                 for row in cursor:
                     row[0] = NRAW[recordNum]
-
-                    cursor.updateRow(row)
-                    recordNum += 1
-
-        if fcStatus == True and pwpStatus == True:
-            # PAW = wc_fc - wc_pwp
-            PAW = point_PTFs.calcWaterContent(wc_fcCalc, wc_pwpCalc, 'plant available water', nameArray)
-            log.info('Plant available water calculated')
-
-            wcFields.append("wc_PAW")
-            wcArrays.append(PAW)
-
-            # Add sat field to output shapefile
-            arcpy.AddField_management(outputShp, "wc_PAW", "DOUBLE", 10, 6)
-
-            recordNum = 0
-            with arcpy.da.UpdateCursor(outputShp, "wc_PAW") as cursor:
-                for row in cursor:
-                    row[0] = PAW[recordNum]
 
                     cursor.updateRow(row)
                     recordNum += 1

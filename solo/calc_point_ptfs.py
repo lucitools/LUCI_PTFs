@@ -251,7 +251,6 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
 
                     if wc_pwp < 0.01:
                         log.error('Water content at PWP is below 0.01')
-                        sys.exit()
                     
                     elif wc_pwp < 0.05:
                         log.warning('Water content at PWP is below 0.05')

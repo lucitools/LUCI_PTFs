@@ -40,8 +40,8 @@ def function(outputFolder, inputShp, PTFOption, BCPressArray, fcVal, sicVal, pwp
 
         # PTFs should return: WC_res, WC_sat, lambda_BC, hb_BC
 
-        if PTFOption == "Cosby_1984_SC_BC":
-            warning, WC_res, WC_sat, lambda_BC, hb_BC = bc_PTFs.Cosby_1984_SC_BC(outputShp, PTFOption)
+        if PTFOption == "Cosby_1984_SandC_BC":
+            warning, WC_res, WC_sat, lambda_BC, hb_BC = bc_PTFs.Cosby_1984_SandC_BC(outputShp, PTFOption)
 
         elif PTFOption == "Cosby_1984_SSC_BC":
             warning, WC_res, WC_sat, lambda_BC, hb_BC = bc_PTFs.Cosby_1984_SSC_BC(outputShp, PTFOption)

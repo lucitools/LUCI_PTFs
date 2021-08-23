@@ -42,8 +42,8 @@ def function(params):
         # Write input params to XML
         common.writeParamsToXML(params, outputFolder)
 
-        if PTFChoice == 'Cosby et al. (1984) - Silt and Clay':
-            PTFOption = 'Cosby_1984_SC_BC'
+        if PTFChoice == 'Cosby et al. (1984) - Sand and Clay':
+            PTFOption = 'Cosby_1984_SandC_BC'
 
         elif PTFChoice == 'Cosby et al. (1984) - Sand, Silt and Clay':
             PTFOption = 'Cosby_1984_SSC_BC'

@@ -251,7 +251,7 @@ def checkPTF(PTFOption):
         PTFUnit = "mmhr"
         PTFFields = ["warning", "K_sat"]
 
-    elif PTFOption == "Cosby_1984_SC_BC":
+    elif PTFOption == "Cosby_1984_SandC_BC":
         PTFType = "bcPTF"
         PTFPressures = "bc"
         PTFUnit = "cm"

@@ -15,10 +15,10 @@ from LUCI_PTFs.lib.external import six # Python 2/3 compatibility module
 from LUCI_PTFs.lib.refresh_modules import refresh_modules
 refresh_modules([log, common, checks_PTFs])
 
-def Cosby_1984_SC_BC(outputShp, PTFOption):
+def Cosby_1984_SandC_BC(outputShp, PTFOption):
     # Not in equation
 
-    log.info("Calculating Brooks-Corey using Cosby et al. (1984) - Silt and Clay")
+    log.info("Calculating Brooks-Corey using Cosby et al. (1984) - Sand and Clay")
 
     # Arrays to output
     warningArray = []
@@ -30,35 +30,35 @@ def Cosby_1984_SC_BC(outputShp, PTFOption):
     # Get OID field
     OIDField = common.getOIDField(outputShp)
 
-    reqFields = [OIDField, "Silt", "Clay"]
+    reqFields = [OIDField, "Sand", "Clay"]
     checks_PTFs.checkInputFields(reqFields, outputShp)
 
     record = []
-    siltPerc = []
+    sandPerc = []
     clayPerc = []
 
-    # Required: silt and clay
+    # Required: sand and clay
     with arcpy.da.SearchCursor(outputShp, reqFields) as searchCursor:
         for row in searchCursor:
             objectID = row[0]
-            silt = row[1]
+            sand = row[1]
             clay = row[2]
 
             record.append(objectID)
-            siltPerc.append(silt)
+            sandPerc.append(sand)
             clayPerc.append(clay)
 
     for x in range(0, len(record)):
         # Data checks
         warningFlag = checks_PTFs.checkValue("Clay", clayPerc[x], record[x])
-        warningFlag = checks_PTFs.checkValue("Silt", siltPerc[x], record[x])
+        warningFlag = checks_PTFs.checkValue("Sand", sandPerc[x], record[x])
         warningArray.append(warningFlag)
 
         # Calculate values
         WC_res = 0
-        WC_sat = (8.23 - (0.0805 * clayPerc[x]) - (0.0070 * siltPerc[x])) / 10.0
-        lambda_BC = 1.0 / (0.92 + (0.0492 * clayPerc[x]) + (0.0144 * siltPerc[x]))
-        hb_BC = 10.0 ** (0.72 + (0.0012 * clayPerc[x]) - (0.0026 * siltPerc[x]))
+        WC_sat = 0.489 - (0.00126 * sandPerc[x])
+        lambda_BC = 1.0 / (2.91 + (0.159 * clayPerc[x]))
+        hb_BC = 10.0 ** (1.88 - (0.013 * sandPerc[x]))
 
         outValues = [WC_res, WC_sat]
         checks_PTFs.checkNegOutput(outValues, x)

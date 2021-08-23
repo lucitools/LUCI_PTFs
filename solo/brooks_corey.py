@@ -74,6 +74,15 @@ def function(outputFolder, inputShp, PTFOption, BCPressArray, fcVal, sicVal, pwp
         ### Calculate water content using BC params ###
         ###############################################
 
+        # Check for any soils that we were not able to calculate BC parameters for
+        # lambda_BC[i] == -9999
+        
+        errors = []
+        for i in range(0, len(lambda_BC)):
+            if lambda_BC[i] == -9999:
+                log.warning('Invalid lambda found for ' + str(nameArray[i]))
+                errors.append(i)
+
         # Calculate water content at default pressures
         WC_1kPaArray = []
         WC_3kPaArray = []
@@ -84,11 +93,15 @@ def function(outputFolder, inputShp, PTFOption, BCPressArray, fcVal, sicVal, pwp
         WC_1000kPaArray = []
         WC_1500kPaArray = []
 
-        for x in range(0, len(nameArray)):
+        for i in range(0, len(nameArray)):
 
             pressures = [1.0, 3.0, 10.0, 33.0, 100.0, 200.0, 1000.0, 1500.0]
 
-            bc_WC = brooksCorey.calcBrooksCoreyFXN(pressures, hb_BC[x], WC_res[x], WC_sat[x], lambda_BC[x])
+            if lambda_BC[i] != -9999:
+                bc_WC = brooksCorey.calcBrooksCoreyFXN(pressures, hb_BC[i], WC_res[i], WC_sat[i], lambda_BC[i])
+
+            else:
+                bc_WC = [-9999] * len(pressures)
 
             WC_1kPaArray.append(bc_WC[0])
             WC_3kPaArray.append(bc_WC[1])
@@ -119,9 +132,14 @@ def function(outputFolder, inputShp, PTFOption, BCPressArray, fcVal, sicVal, pwp
         wcArrays = []
 
         # Calculate soil moisture content at custom VG pressures
-        for x in range(0, len(nameArray)):
-            wcValues = brooksCorey.calcBrooksCoreyFXN(bcPressures, hb_BC[x], WC_res[x], WC_sat[x], lambda_BC[x])
-            wcValues.insert(0, nameArray[x])
+        for i in range(0, len(nameArray)):
+
+            if lambda_BC[i] != -9999:
+                wcValues = brooksCorey.calcBrooksCoreyFXN(bcPressures, hb_BC[i], WC_res[i], WC_sat[i], lambda_BC[i])
+            else:
+                wcValues = [-9999] * len(bcPressures)
+
+            wcValues.insert(0, nameArray[i])
 
             wcArrays.append(wcValues)
 
@@ -159,22 +177,34 @@ def function(outputFolder, inputShp, PTFOption, BCPressArray, fcVal, sicVal, pwp
         wcCriticalPressures = [0.0, fcVal, sicVal, pwpVal]
 
         for x in range(0, len(nameArray)):
-            wcCriticals = brooksCorey.calcBrooksCoreyFXN(wcCriticalPressures, hb_BC[x], WC_res[x], WC_sat[x], lambda_BC[x])
 
-            wc_sat = wcCriticals[0]
-            wc_fc = wcCriticals[1]
-            wc_sic = wcCriticals[2]
-            wc_pwp = wcCriticals[3]
+            if lambda_BC[x] != -9999:
+                wcCriticals = brooksCorey.calcBrooksCoreyFXN(wcCriticalPressures, hb_BC[x], WC_res[x], WC_sat[x], lambda_BC[x])
 
-            drainWater = wc_sat - wc_fc
-            readilyAvailWater = wc_fc - wc_sic
-            notRAW = wc_sic - wc_pwp
-            PAW = wc_fc - wc_pwp
+                wc_sat = wcCriticals[0]
+                wc_fc = wcCriticals[1]
+                wc_sic = wcCriticals[2]
+                wc_pwp = wcCriticals[3]
 
-            checks_PTFs.checkNegValue("Drainable water", drainWater, nameArray[i])
-            checks_PTFs.checkNegValue("Readily available water", readilyAvailWater, nameArray[i])
-            checks_PTFs.checkNegValue("Not readily available water", notRAW, nameArray[i])
-            checks_PTFs.checkNegValue("Not readily available water", PAW, nameArray[i])
+                drainWater = wc_sat - wc_fc
+                readilyAvailWater = wc_fc - wc_sic
+                notRAW = wc_sic - wc_pwp
+                PAW = wc_fc - wc_pwp
+
+                checks_PTFs.checkNegValue("Drainable water", drainWater, nameArray[i])
+                checks_PTFs.checkNegValue("Readily available water", readilyAvailWater, nameArray[i])
+                checks_PTFs.checkNegValue("Not readily available water", notRAW, nameArray[i])
+                checks_PTFs.checkNegValue("Not readily available water", PAW, nameArray[i])
+
+            else:
+                wc_sat = -9999
+                wc_fc = -9999
+                wc_sic = -9999
+                wc_pwp = -9999
+                drainWater = -9999
+                readilyAvailWater = -9999
+                notRAW = -9999
+                PAW = -9999
 
             wc_satCalc.append(wc_sat)
             wc_fcCalc.append(wc_fc)

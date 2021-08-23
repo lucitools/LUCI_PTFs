@@ -149,7 +149,7 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
 
         if satField in PTFFields:
             # Saturation set to 0kPa
-            # PTFs with 0kpa:
+            # PTFs with 0kPa:
             ## Saxton_1986, Batjes_1996, SaxtonRawls_2006
             ## Lal_1978_Group1, Lal_1978_Group2
             ## TomasellaHodnett_1998
@@ -250,7 +250,7 @@ def function(outputFolder, inputShp, PTFOption, fcVal, sicVal, pwpVal, carbConte
                     wc_pwp = row[0]
 
                     if wc_pwp < 0.01:
-                        log.error('Water content at PWP is below 0.01')
+                        log.warning('WARNING: Water content at PWP is below 0.01')
                     
                     elif wc_pwp < 0.05:
                         log.warning('Water content at PWP is below 0.05')

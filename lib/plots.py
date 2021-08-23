@@ -29,10 +29,8 @@ def plotPTF(outputFolder, outputShp, PTFOption, nameArray, results):
     PTFPressures = PTFInfo.PTFPressures
     PTFUnit = PTFInfo.PTFUnit
 
-    # log.info('results before pop: ' + str(results))
-
+    # Remove warning
     results.pop(0)
-    # log.info('results after pop: ' + str(results))
 
     waterContents = []
 
@@ -45,7 +43,23 @@ def plotPTF(outputFolder, outputShp, PTFOption, nameArray, results):
 
         waterContents.append(WC)
 
-    # log.info('waterContents: ' + str(waterContents))
+    # log.info('DEBUG: waterContents: ')
+    # log.info(waterContents)
+
+    PTFInfo = PTFdatabase.checkPTF(PTFOption)
+    WCheadings = PTFInfo.PTFFields
+    WCheadings.pop(0) # remove warning
+
+    for j in range(0, len(waterContents)):
+        WC = waterContents[j]
+
+        firstWCName = WCheadings[0]
+        firstWCVal = WC[0]
+
+        for i in range(1, len(WC)):
+            if WC[i] > firstWCVal:
+                log.warning('Water content in field ' + str(WCheadings[i]) + ' is higher than pressure at lowest water content (' + str(firstWCName) + ')')
+                log.warning('Check this soil: ' + str(nameArray[j]))
 
     # Get units for plot
     unitPlots = common.getInputValue(outputFolder, "Pressure_units_plot")

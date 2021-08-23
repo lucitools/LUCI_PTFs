@@ -16,8 +16,7 @@ from LUCI_PTFs.lib.refresh_modules import refresh_modules
 refresh_modules([log, common, checks_PTFs])
 
 def Cosby_1984_SandC_BC(outputShp, PTFOption):
-    # Not in equation
-
+    
     log.info("Calculating Brooks-Corey using Cosby et al. (1984) - Sand and Clay")
 
     # Arrays to output
@@ -330,10 +329,10 @@ def SaxtonRawls_2006_BC(outputShp, PTFOption, carbonConFactor, carbContent):
 
     # Requirements: sand, clay, and OM
     if carbContent == 'OC':
-        reqFields = [OIDField, "Sand", "Clay", "OC"]
+        reqFields = [OIDField, "Sand", "Clay", "OC", "LUCIname"]
 
     elif carbContent == 'OM':
-        reqFields = [OIDField, "Sand", "Clay", "OM"]
+        reqFields = [OIDField, "Sand", "Clay", "OM", "LUCIname"]
         carbonConFactor = 1.0
     
     checks_PTFs.checkInputFields(reqFields, outputShp)
@@ -343,6 +342,7 @@ def SaxtonRawls_2006_BC(outputShp, PTFOption, carbonConFactor, carbContent):
     sandPerc = []
     clayPerc = []
     carbPerc = []
+    name = []
 
     with arcpy.da.SearchCursor(outputShp, reqFields) as searchCursor:
         for row in searchCursor:
@@ -350,11 +350,13 @@ def SaxtonRawls_2006_BC(outputShp, PTFOption, carbonConFactor, carbContent):
             sand = row[1]
             clay = row[2]
             carbon = row[3]
+            recName = row[4]
 
             record.append(objectID)
             sandPerc.append(sand)
             clayPerc.append(clay)
             carbPerc.append(carbon)
+            name.append(recName)
 
     for x in range(0, len(record)):
         # Data checks
@@ -379,10 +381,28 @@ def SaxtonRawls_2006_BC(outputShp, PTFOption, carbonConFactor, carbContent):
 
         # Need checks on WC_33kPa and WC_1500kPa
 
-        B_SR = (math.log(1500.0) - math.log(33.0)) / (math.log(WC_33kPa) - math.log(WC_1500kPa))
-        lambda_BC = 1.0 / float(B_SR)
-        hbt_BC = - (0.2167 * sandPerc[x]) - (0.2793 * clayPerc[x])  -  (81.97 * WC_sat_33kPa) + (0.7112 * sandPerc[x] * WC_sat_33kPa)  + (0.0829 * clayPerc[x]  * WC_sat_33kPa) + (0.001405 * sandPerc[x] * clayPerc[x])   + 27.16
-        hb_BC = hbt_BC + (0.02 * hbt_BC  ** 2)  - (0.113 * hbt_BC) - 0.7
+        wcError = False
+
+        if WC_33kPa < 0.0:
+            log.warning('WARNING: water content at 33kPa is negative for ' + str(name[x]))
+            log.warning('WARNING: Cannot calculate lambda, setting it to -9999 for error catching')
+            wcError = True
+
+        if WC_1500kPa < 0.0:
+            log.warning('WARNING: Water content at 1500kPa is negative for ' + str(name[x]))
+            log.warning('WARNING: Cannot calculate lambda, setting it to -9999 for error catching')
+            wcError = True
+
+        if wcError == True:
+            lambda_BC = -9999
+            hb_BC = -9999
+
+        else:
+
+            B_SR = (math.log(1500.0) - math.log(33.0)) / (math.log(WC_33kPa) - math.log(WC_1500kPa))
+            lambda_BC = 1.0 / float(B_SR)
+            hbt_BC = - (0.2167 * sandPerc[x]) - (0.2793 * clayPerc[x])  -  (81.97 * WC_sat_33kPa) + (0.7112 * sandPerc[x] * WC_sat_33kPa)  + (0.0829 * clayPerc[x]  * WC_sat_33kPa) + (0.001405 * sandPerc[x] * clayPerc[x])   + 27.16
+            hb_BC = hbt_BC + (0.02 * hbt_BC  ** 2)  - (0.113 * hbt_BC) - 0.7
 
         WC_resArray.append(WC_residual)
         WC_satArray.append(WC_sat)

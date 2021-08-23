@@ -209,9 +209,9 @@ def Vereecken_1989(outputShp, VGOption, carbonConFactor, carbContent):
         WC_sat = 0.81 - (0.283 * BDg_cm3[x]) + (0.001 * clayPerc[x])
         WC_residual = 0.015 + (0.005 * clayPerc[x]) + (0.014 * carbPerc[x]*float(carbonConFactor))
         
-        # Vereecken et al. (1989) calculates alpha in cm-1
-        alpha_cm = math.exp(-2.486 + (0.025 * sandPerc[x]) - (0.351 * carbPerc[x]*float(carbonConFactor)) - (2.617 * BDg_cm3[x]) - (0.023*clayPerc[x]))
-        alpha_VG = 10.0 * alpha_cm # Converted cm-1 to kPa-1
+        # Vereecken et al. (1989) calculates alpha in PF-1
+        alpha_pf = math.exp(-2.486 + (0.025 * sandPerc[x]) - (0.351 * carbPerc[x]*float(carbonConFactor)) - (2.617 * BDg_cm3[x]) - (0.023*clayPerc[x]))
+        alpha_VG = (10.0 ** alpha_pf) / 10.0 # Converted PF-1 to kPa-1
 
         n_VG = math.exp(0.053 - (0.009 * sandPerc[x]) - (0.013 * clayPerc[x]) + (0.00015 * sandPerc[x]**2))
         m_VG = 1.0

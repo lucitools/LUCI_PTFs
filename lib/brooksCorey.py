@@ -78,12 +78,23 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
     # Check what unit the user wants to output
     PTFUnit = common.getInputValue(outputFolder, 'Pressure_units_plot')
 
+    # Check for any soils that we were not able to calculate BC parameters for
+    # lambdaArray[i] == -9999
+    # hbArray[i] == -9999
+    
+    errors = []
+    for i in range(0, len(lambdaArray)):
+        if lambdaArray[i] == -9999:
+            log.warning('Invalid lambda found for ' + str(nameArray[i]))
+            errors.append(i)
+
     ################################
     ### Plot 0: individual plots ###
     ################################
 
     # Plot 0: pressure on the y-axis and water content on the x-axis
-    for i in range(0, len(nameArray)):
+    for i in [x for x in range(0, len(nameArray)) if x not in errors]:
+
         outName = 'bc_' + str(nameArray[i]) + '.png'
         outPath = os.path.join(outputFolder, outName)
         title = 'Brooks-Corey plot for ' + str(nameArray[i])
@@ -145,7 +156,7 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
     # Define pressure vector 
     psi_kPa = np.linspace(0.0, 1500.0, 1500)
 
-    for i in range(0, len(nameArray)):
+    for i in [x for x in range(0, len(nameArray)) if x not in errors]:
 
         # Calculate WC over pressure vector 
         bc_WC = calcBrooksCoreyFXN(psi_kPa, hbArray[i], WC_resArray[i], WC_satArray[i], lambdaArray[i])

@@ -109,7 +109,7 @@ class calcPoint_PTFs(object):
         param.filter.list = [u'Nguyen et al. (2014)', u'Adhikary et al. (2008)',
                              u'Rawls et al. (1982)', 
                              u'Hall et al. (1977) topsoil', u'Hall et al. (1977) subsoil', u'Gupta and Larson (1979)',
-                             u'Batjes (1996)', u'Saxton and Rawls (2006)',
+                             u'Batjes (1996)', 
                              u'Pidgeon (1972)',
                              u'Lal (1978) Group I - Clay, BD', u'Lal (1978) Group II - Clay, BD',
                              u'Aina and Periaswamy (1985)',

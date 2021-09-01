@@ -57,7 +57,10 @@ def Cosby_1984_SandC_BC(outputShp, PTFOption):
         WC_res = 0
         WC_sat = 0.489 - (0.00126 * sandPerc[x])
         lambda_BC = 1.0 / (2.91 + (0.159 * clayPerc[x]))
-        hb_BC = 10.0 ** (1.88 - (0.013 * sandPerc[x]))
+
+        # Originally in cm
+        hb_cm = 10.0 ** (1.88 - (0.013 * sandPerc[x]))
+        hb_BC = hb_cm / 10.0 # Convert to kPa
 
         outValues = [WC_res, WC_sat]
         checks_PTFs.checkNegOutput(outValues, x)
@@ -114,7 +117,10 @@ def Cosby_1984_SSC_BC(outputShp, PTFOption):
         WC_res = 0
         WC_sat = (50.5 - (0.037 * clayPerc[x]) - (0.142 * sandPerc[x])) / 100.0
         lambda_BC = 1.0 / (3.10 + (0.157 * clayPerc[x]) - (0.003 * sandPerc[x]))
-        hb_BC = 10.0 ** (1.54 - (0.0095 * sandPerc[x]) + (0.0063 * siltPerc[x]))
+        
+        # Originally in cm
+        hb_cm = 10.0 ** (1.54 - (0.0095 * sandPerc[x]) + (0.0063 * siltPerc[x]))
+        hb_BC = hb_cm / 10.0 # Convert to kPa
 
         outValues = [WC_res, WC_sat]
         checks_PTFs.checkNegOutput(outValues, x)
@@ -170,7 +176,11 @@ def RawlsBrakensiek_1985_BC(outputShp, PTFOption):
 
         # Calculate values
         WC_residual = -0.0182482 + (0.00087269 * sandPerc[x]) + (0.00513488 * clayPerc[x]) + (0.02939286 * WC_satArray[x]) - (0.00015395 * clayPerc[x]**2) - (0.0010827 * sandPerc[x] * WC_satArray[x]) - (0.00018233 * clayPerc[x]**2 * WC_satArray[x]**2) + (0.00030703 * clayPerc[x]**2 * WC_satArray[x]) - (0.0023584 * WC_satArray[x]**2 * clayPerc[x])
-        hb_BC = math.exp(5.3396738 + (0.1845038 * clayPerc[x]) - (2.48394546 * WC_satArray[x]) - (0.00213853 * clayPerc[x]**2) - (0.04356349 * sandPerc[x] * WC_satArray[x]) - (0.61745089 * clayPerc[x] * WC_satArray[x]) + (0.00143598 * sandPerc[x]**2 * WC_satArray[x]**2) - (0.00855375 * clayPerc[x]**2 * WC_satArray[x]**2) - (0.00001282 * sandPerc[x]**2 * clayPerc[x]) + (0.00895359 * clayPerc[x]**2 * WC_satArray[x]) - (0.00072472 * sandPerc[x]**2 * WC_satArray[x]) + (0.0000054 * clayPerc[x]**2 * sandPerc[x]) + (0.50028060 * WC_satArray[x]**2 * clayPerc[x]))
+        
+        # Originally in cm
+        hb_cm = math.exp(5.3396738 + (0.1845038 * clayPerc[x]) - (2.48394546 * WC_satArray[x]) - (0.00213853 * clayPerc[x]**2) - (0.04356349 * sandPerc[x] * WC_satArray[x]) - (0.61745089 * clayPerc[x] * WC_satArray[x]) + (0.00143598 * sandPerc[x]**2 * WC_satArray[x]**2) - (0.00855375 * clayPerc[x]**2 * WC_satArray[x]**2) - (0.00001282 * sandPerc[x]**2 * clayPerc[x]) + (0.00895359 * clayPerc[x]**2 * WC_satArray[x]) - (0.00072472 * sandPerc[x]**2 * WC_satArray[x]) + (0.0000054 * clayPerc[x]**2 * sandPerc[x]) + (0.50028060 * WC_satArray[x]**2 * clayPerc[x]))
+        hb_BC = hb_cm / 10.0 # Convert to kPa
+
         lambda_BC = math.exp(-0.7842831 + (0.0177544 * sandPerc[x]) - (1.062498 * WC_satArray[x]) - (0.00005304 * sandPerc[x]**2) - (0.00273493 * clayPerc[x]**2) + (1.11134946 * WC_satArray[x]**2) - (0.03088295 * sandPerc[x] * WC_satArray[x])  + (0.00026587 * sandPerc[x]**2 * WC_satArray[x]**2)  - (0.00610522 * clayPerc[x]**2 * WC_satArray[x]**2) - (0.00000235 * sandPerc[x]**2 * clayPerc[x]) + (0.00798746 * clayPerc[x]**2 * WC_satArray[x]) - (0.00674491 * WC_satArray[x]**2 * clayPerc[x]))
 
         checks_PTFs.checkNegOutput([WC_residual], x)
@@ -237,7 +247,11 @@ def CampbellShiozawa_1992_BC(outputShp, PTFOption):
         Sg_CS = (math.exp((0.133 * siltPerc[x]) + (0.477 * clayPerc[x]) - ((math.log(dg_CS))**2)))**0.5
         hes_CS = 0.05/float((math.sqrt(dg_CS)))
         b_CS = (-20.0 * (-hes_CS)) + (0.2 * Sg_CS)
-        hb_BC = 100.0 * (hes_CS * ((BDg_cm3[x] / 1.3) ** (0.67* b_CS)))
+        
+        # Originally in cm
+        hb_cm = 100.0 * (hes_CS * ((BDg_cm3[x] / 1.3) ** (0.67* b_CS)))
+        hb_BC = hb_cm / 10.0 # Convert to kPa
+
         lambda_BC = 1.0 /float(b_CS)
 
         checks_PTFs.checkNegOutput([WC_residual], x)
@@ -299,7 +313,7 @@ def Saxton_1986_BC(outputShp, PTFOption):
         WC_residual = 0
         A_Saxton = 100 * math.exp(-4.396 - (0.0715 * clayPerc[x])- (0.000488 * sandPerc[x]**2) - (0.00004285 * sandPerc[x]**2 * clayPerc[x])) 
         B_Saxton = -3.140 - (0.00222 * clayPerc[x]**2) - (0.00003484 * sandPerc[x]**2 * clayPerc[x])
-        hb_BC = 10.0 * A_Saxton * (WC_sat** B_Saxton)  
+        hb_BC = A_Saxton * (WC_sat** B_Saxton)  
         lambda_BC = -1.0 / float(B_Saxton)
 
         checks_PTFs.checkNegOutput([WC_sat, WC_residual], x)

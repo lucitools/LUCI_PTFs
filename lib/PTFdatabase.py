@@ -278,13 +278,13 @@ def checkPTF(PTFOption):
     elif PTFOption == "Saxton_1986_BC":
         PTFType = "bcPTF"
         PTFPressures = "bc"
-        PTFUnit = "cm"
+        PTFUnit = "kPa"
         PTFFields = ["warning", "WC_res", "WC_sat", "lambda_BC", "hb_BC"]
 
     elif PTFOption == "SaxtonRawls_2006_BC":
         PTFType = "bcPTF"
         PTFPressures = "bc"
-        PTFUnit = "cm"
+        PTFUnit = "kPa"
         PTFFields = ["warning", "WC_res", "WC_sat", "lambda_BC", "hb_BC"]
 
     else:

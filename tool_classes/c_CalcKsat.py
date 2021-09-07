@@ -34,7 +34,7 @@ class CalcKsat(object):
             input_validation.checkThresholdValues(self, "CalcKsat")
     
     def __init__(self):
-        self.label = u'Calculate saturated hydraulic conductivity (Ksat)'
+        self.label = u'04 Calculate saturated hydraulic conductivity (Ksat)'
         self.canRunInBackground = False
 
     def getParameterInfo(self):

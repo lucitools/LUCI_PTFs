@@ -54,7 +54,7 @@ class BrooksCorey(object):
             input_validation.checkFilePaths(self)
     
     def __init__(self):
-        self.label = u'Calculate Brooks-Corey parameters and plot soil moisture retention curve'
+        self.label = u'02 Calculate Brooks-Corey parameters and plot SMRC'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -128,7 +128,7 @@ class BrooksCorey(object):
         param = arcpy.Parameter()
         param.name = u'FieldCapacity'
         param.displayName = u'Value of pressure (kPa) at field capacity'
-        param.parameterType = 'Optional'
+        param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
         param.value = u'33'
@@ -138,7 +138,7 @@ class BrooksCorey(object):
         param = arcpy.Parameter()
         param.name = u'SIC'
         param.displayName = u'Value of pressure (kPa) at water stress-induced stomata closure'
-        param.parameterType = 'Optional'
+        param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
         param.value = u'100'
@@ -148,7 +148,7 @@ class BrooksCorey(object):
         param = arcpy.Parameter()
         param.name = u'PWP'
         param.displayName = u'Value of pressure (kPa) at permanent wilting point'
-        param.parameterType = 'Optional'
+        param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
         param.value = u'1500'

@@ -54,7 +54,7 @@ class calcVG_PTFs(object):
             input_validation.checkFilePaths(self)
     
     def __init__(self):
-        self.label = u'Calculate van Genuchten parameters and plot SMRC'
+        self.label = u'01 Calculate van Genuchten parameters and plot SMRC'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -126,7 +126,7 @@ class calcVG_PTFs(object):
         param = arcpy.Parameter()
         param.name = u'FieldCapacity'
         param.displayName = u'Value of pressure (kPa) at field capacity'
-        param.parameterType = 'Optional'
+        param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
         param.value = u'33'
@@ -136,7 +136,7 @@ class calcVG_PTFs(object):
         param = arcpy.Parameter()
         param.name = u'SIC'
         param.displayName = u'Value of pressure (kPa) at water stress-induced stomata closure'
-        param.parameterType = 'Optional'
+        param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
         param.value = u'100'
@@ -146,7 +146,7 @@ class calcVG_PTFs(object):
         param = arcpy.Parameter()
         param.name = u'PWP'
         param.displayName = u'Value of pressure (kPa) at permanent wilting point'
-        param.parameterType = 'Optional'
+        param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
         param.value = u'1500'

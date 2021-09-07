@@ -88,6 +88,11 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
             log.warning('Invalid lambda found for ' + str(nameArray[i]))
             errors.append(i)
 
+    # Define output folder for CSVs
+    outFolder = os.path.join(outputFolder, 'BC_waterContents')
+    if not os.path.exists(outFolder):
+        os.mkdir(outFolder)
+
     ################################
     ### Plot 0: individual plots ###
     ################################
@@ -100,11 +105,13 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
         title = 'Brooks-Corey plot for ' + str(nameArray[i])
 
         # Set pressure vector
-        psi_kPa = np.linspace(0.01, 1500.0, 1500)
+        psi_kPa = np.linspace(0.0, 1500.0, 1501)
 
         # Calculate WC over that pressure vector
         bc_WC = calcBrooksCoreyFXN(psi_kPa, hbArray[i], WC_resArray[i], WC_satArray[i], lambdaArray[i])
         
+        common.writeWCCSV(outFolder, nameArray[i], psi_kPa, bc_WC)
+
         ## Figure out what to do about multipliers
         if PTFUnit == 'kPa':
             pressureUnit = 'kPa'
@@ -154,7 +161,7 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
     title = 'Brooks-Corey plots of ' + str(len(nameArray)) + ' soils (log scale)'
 
     # Define pressure vector 
-    psi_kPa = np.linspace(0.0, 1500.0, 1500)
+    psi_kPa = np.linspace(0.0, 1500.0, 1501)
 
     for i in [x for x in range(0, len(nameArray)) if x not in errors]:
 

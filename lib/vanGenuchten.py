@@ -100,6 +100,11 @@ def plotVG(outputFolder, WC_residualArray,
     else:
         log.error('Pressure unit for PTF not recognised')
 
+    # Define output folder for CSVs
+    outFolder = os.path.join(outputFolder, 'VG_waterContents')
+    if not os.path.exists(outFolder):
+        os.mkdir(outFolder)
+
     # Plot 1: pressure on the x-axis and water content on the y-axis
     for i in range(0, len(nameArray)):
         outName = 'vg_' + str(nameArray[i]) + '.png'
@@ -107,11 +112,13 @@ def plotVG(outputFolder, WC_residualArray,
         title = 'Van Genuchten plot for ' + str(nameArray[i])
 
         # Set pressure vector
-        psi_kPa = np.linspace(0.0, 1500.0, 1500)
+        psi_kPa = np.linspace(0.0, 1500.0, 1501)
 
         # Calculate WC over the pressure vector above
         vg_WC = calcVGfxn(psi_kPa, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
-        
+
+        common.writeWCCSV(outFolder, nameArray[i], psi_kPa, vg_WC)
+
         # For plotting purposes, adjust psi_plot based on user-input
         if PTFUnit == 'kPa':
             pressureUnit = 'kPa'
@@ -184,7 +191,7 @@ def plotVG(outputFolder, WC_residualArray,
     title = 'Van Genuchten plots of ' + str(len(nameArray)) + ' soils (log scale)'
 
     # Define pressure vector 
-    psi_kPa = np.linspace(0.0, 1500.0, 1500)
+    psi_kPa = np.linspace(0.0, 1500.0, 1501)
 
     labels = []
     for i in range(0, len(nameArray)):
@@ -229,7 +236,7 @@ def plotVG(outputFolder, WC_residualArray,
     title = 'Van Genuchten plots of ' + str(len(nameArray)) + ' soils (log scale)'
 
     # Define pressure vector 
-    psi_kPa = np.linspace(0.0, 1500.0, 1500)
+    psi_kPa = np.linspace(0.0, 1500.0, 1501)
 
     labels = []
     for i in range(0, len(nameArray)):

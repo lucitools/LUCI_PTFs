@@ -540,3 +540,37 @@ def writeOutputCriticalWC(outputShp, wc_sat, wc_fc, wc_sic, wc_pwp, wc_DW, wc_RA
 
     log.info('Water contents for critical thresholds written to output shapefile')
 
+def writeWCCSV(outputFolder, soilName, pressureArray, WCArray):
+    import csv
+
+    # This function writes a CSV containing pressure and WC
+
+    # log.info('DEBUG: pressureArray: '+ str(pressureArray))
+    # log.info('DEBUG: WCArray: '+ str(WCArray))
+
+    # Loop through and reshape the array
+    headings = ['Pressure_kPa', 'WaterContent']
+    outArray = []
+
+    for i in range(0, len(pressureArray)):
+        pressure = pressureArray[i]
+        waterContent = WCArray[i]
+        dataPoint = [pressure, waterContent]
+        outArray.append(dataPoint)
+
+    # Write to output CSV
+    outName = str(soilName) + '.csv'
+    outCSV = os.path.join(outputFolder, outName)
+
+    with open(outCSV, 'wb') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(headings)
+
+        for i in range(0, len(outArray)):
+            row = outArray[i]
+            writer.writerow(row)
+
+        msg = 'Output CSV with water contents and pressure saved to: ' + str(outCSV)
+        log.info(msg)
+
+    csv_file.close()

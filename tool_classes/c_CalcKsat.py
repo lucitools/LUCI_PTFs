@@ -109,7 +109,7 @@ class CalcKsat(object):
         # 6 Conversion_factor
         param = arcpy.Parameter()
         param.name = u'Conversion_factor'
-        param.displayName = u'If the selected PTF requires organic carbon or organic matter, enter the appropriate conversion factor to change OM to OC (or vice-versa):'
+        param.displayName = u'If the selected PTF requires organic carbon or organic matter, enter the appropriate conversion factor to change OM to OC (or vice-versa), default factors provided:'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'Double'

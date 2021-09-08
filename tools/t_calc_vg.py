@@ -28,7 +28,8 @@ def function(params):
         carbonContent = pText[9]
         carbonConFactor = pText[10]
         unitsPlot = pText[11]
-        MVGChoice =  common.strToBool(pText[12])
+        plotAxis = pText[12]
+        MVGChoice =  common.strToBool(pText[13])
 
         # Create output folder
         if not os.path.exists(outputFolder):
@@ -106,7 +107,7 @@ def function(params):
 
         # Loading shapefile automatically
         soilParamOut = os.path.join(outputFolder, "soil_vg.shp")
-        arcpy.SetParameter(13, soilParamOut)
+        arcpy.SetParameter(14, soilParamOut)
 
         log.info("van Genuchten operations completed successfully")
 

@@ -27,6 +27,7 @@ def function(params):
         carbonContent = pText[9]
         carbonConFactor = pText[10]
         unitsPlot = pText[11]
+        axisChoice = pText[12]
 
         # Create output folder
         if not os.path.exists(outputFolder):
@@ -106,7 +107,7 @@ def function(params):
 
         # Set output filename for display
         BCOut = os.path.join(outputFolder, "BrooksCorey.shp")
-        arcpy.SetParameter(12, BCOut)
+        arcpy.SetParameter(13, BCOut)
 
         log.info("Brooks-Corey operations completed successfully")
 

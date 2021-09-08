@@ -85,6 +85,9 @@ def plotVG(outputFolder, WC_residualArray,
     # Check what unit the user wants to output
     PTFUnit = common.getInputValue(outputFolder, 'Pressure_units_plot')
 
+    # Check what axis was chosen
+    AxisChoice = common.getInputValue(outputFolder, 'Plot_axis')
+
     if PTFUnit == 'kPa':
         pressureUnit = 'kPa'
         alphaMult = 1.0        
@@ -117,7 +120,7 @@ def plotVG(outputFolder, WC_residualArray,
         # Calculate WC over the pressure vector above
         vg_WC = calcVGfxn(psi_kPa, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
 
-        common.writeWCCSV(outFolder, nameArray[i], psi_kPa, vg_WC)
+        common.writeWCCSV(outFolder, nameArray[i], psi_kPa, vg_WC, 'Pressures_kPa', 'WaterContents')
 
         # For plotting purposes, adjust psi_plot based on user-input
         if PTFUnit == 'kPa':
@@ -151,19 +154,7 @@ def plotVG(outputFolder, WC_residualArray,
         if theta_0kPa > theta_sat_threshold:
             log.warning('Water content at 0kPa is larger than theta(saturation) + 1 percent')
 
-        # Set limits for WC axis
-
-        ## Opt 1: based on WC_res and WC_sat
-        # wcBottom = max((np.floor(WC_residualArray[i] * 100) / 100) - 0.01, 0)
-        # wcTop = min(WC_satArray[i] + 0.1, 1)
-
-        ## Opt 2: based on the 0kPa and 1500kPa of the curve
-        # theta_1500kPa = calcVGfxn(1500, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
-        # wcBottom = max(theta_1500kPa - 0.01, 0)
-        # wcTop = min(theta_0kPa + 0.01, 1.0)
-
-        ## Opt 3: based on the WCsat and 1500kPa of the curve
-        ## Suggested by Anh
+        # Limits ased on the WCsat and 1500kPa of the curve
         theta_1500kPa = calcVGfxn(1500, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
         wcBottom = max(theta_1500kPa - 0.01, 0)
         wcTop = min(WC_satArray[i] + 0.1, 1)
@@ -171,20 +162,40 @@ def plotVG(outputFolder, WC_residualArray,
         # Convert psi_plot to negative for plotting
         psi_neg = -1.0 * psi_plot
 
-        # Plotting
-        plt.plot(psi_neg, vg_WC, label=str(nameArray[i]))
-        plt.xscale('symlog')
-        plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
-        plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
-        plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
-        plt.xlabel('Pressure (' + str(pressureUnit) + ')')
-        plt.ylabel('Volumetric water content')
-        plt.ylim([wcBottom, wcTop])
-        plt.title(title)
-        plt.legend(loc="best")
-        plt.savefig(outPath, transparent=False)
-        plt.close()
-        log.info('Plot created for soil ' + str(nameArray[i]))
+        if AxisChoice == 'Y-axis':
+            # Plotting
+            plt.plot(psi_neg, vg_WC, label=str(nameArray[i]))
+            plt.xscale('symlog')
+            plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
+            plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
+            plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
+            plt.xlabel('Pressure (' + str(pressureUnit) + ')')
+            plt.ylabel('Volumetric water content')
+            plt.ylim([wcBottom, wcTop])
+            plt.title(title)
+            plt.legend(loc="best")
+            plt.savefig(outPath, transparent=False)
+            plt.close()
+            log.info('Plot created for soil ' + str(nameArray[i]))
+
+        elif AxisChoice == 'X-axis':
+            plt.plot(vg_WC, psi_neg, label=str(nameArray[i]))
+            plt.yscale('symlog')
+            plt.axhline(y=fc_plot, color='g', linestyle='dashed', label='FC')
+            plt.axhline(y=sic_plot, color='m', linestyle='dashed', label='SIC')
+            plt.axhline(y=pwp_plot, color='r', linestyle='dashed', label='PWP')
+            plt.ylabel('Pressure (' + str(pressureUnit) + ')')
+            plt.xlabel('Volumetric water content')
+            plt.xlim([wcBottom, wcTop])
+            plt.title(title)
+            plt.legend(loc="best")
+            plt.savefig(outPath, transparent=False)
+            plt.close()
+            log.info('Plot created for soil ' + str(nameArray[i]))
+
+        else:
+            log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+            sys.exit()
 
     # Plot 2: log pressure on the x-axis, WC on the y-axis
     outPath = os.path.join(outputFolder, 'plotVG_logPressure.png')
@@ -214,22 +225,45 @@ def plotVG(outputFolder, WC_residualArray,
         # Convert psi to negative for plotting purposes
         psi_neg = -1.0 * psi_plot
 
-        plt.plot(psi_neg, vg_WC, label=str(nameArray[i]))
+        if AxisChoice == 'Y-axis':
+            plt.plot(psi_neg, vg_WC, label=str(nameArray[i]))
+
+        elif AxisChoice == 'X-axis':
+            plt.plot(vg_WC, psi_neg, label=str(nameArray[i]))
+
+        else:
+            log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+            sys.exit()
     
-    # plt.axvline(x=33.0, color='r', linestyle='dashed', label='Field capacity')
-    # plt.xlim([1, 1000000.0])
-    # plt.ylim([0, 1.0])
-    plt.xscale('symlog')
-    plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
-    plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
-    plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
-    plt.title(title)
-    plt.ylabel('Water content')
-    plt.xlabel('Pressure (' + str(pressureUnit) + ')')
-    plt.legend(ncol=2, fontsize=12, loc="best")
-    plt.savefig(outPath, transparent=False)
-    plt.close()
-    log.info('Plot created with water content on the y-axis')
+    if AxisChoice == 'Y-axis':
+        plt.xscale('symlog')
+        plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
+        plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
+        plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
+        plt.title(title)
+        plt.ylabel('Water content')
+        plt.xlabel('Pressure (' + str(pressureUnit) + ')')
+        plt.legend(ncol=2, fontsize=12, loc="best")
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created with water content on the y-axis')
+
+    elif AxisChoice == 'X-axis':
+        plt.yscale('symlog')
+        plt.axhline(y=fc_plot, color='g', linestyle='dashed', label='FC')
+        plt.axhline(y=sic_plot, color='m', linestyle='dashed', label='SIC')
+        plt.axhline(y=pwp_plot, color='r', linestyle='dashed', label='PWP')
+        plt.title(title)
+        plt.xlabel('Water content')
+        plt.ylabel('Pressure (' + str(pressureUnit) + ')')
+        plt.legend(ncol=2, fontsize=12, loc="best")
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created with water content on the x-axis')
+
+    else:
+        log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+        sys.exit()
 
     # Plot 3: pressure on the x-axis, WC on the y-axis
     outPath = os.path.join(outputFolder, 'plotVG_Pressure.png')
@@ -259,50 +293,44 @@ def plotVG(outputFolder, WC_residualArray,
         # Convert psi to negative for plotting purposes
         psi_neg = -1.0 * psi_plot
 
-        plt.plot(psi_neg, vg_WC, label=str(nameArray[i]))
+        if AxisChoice == 'Y-axis':
+            plt.plot(psi_neg, vg_WC, label=str(nameArray[i]))
+
+        elif AxisChoice == 'X-axis':
+            plt.plot(vg_WC, psi_neg, label=str(nameArray[i]))
+
+        else:
+            log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+            sys.exit()
     
-    # plt.axvline(x=33.0, color='r', linestyle='dashed', label='Field capacity')
-    # plt.xlim([1, 1000000.0])
-    # plt.ylim([0, 1.0])
-    # plt.xscale('symlog')
-    plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
-    plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
-    plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
-    plt.title(title)
-    plt.ylabel('Water content')
-    plt.xlabel('Pressure (' + str(pressureUnit) + ')')
-    plt.legend(ncol=2, fontsize=12, loc="best")
-    plt.savefig(outPath, transparent=False)
-    plt.close()
-    log.info('Plot created with water content on the y-axis')
-
-    '''
-    #########################################
-    ### Plot 3: one plot with all records ###
-    #########################################
-
-    # Plot 3: WC on the y-axis zoomed in to 1 to 600 kPa
-    outPath = os.path.join(outputFolder, 'plotVG_200kPa.png')
-    title = 'Van Genuchten plots of ' + str(len(record)) + ' soils (water content on y-axis)'
-
-    psi_kPa = np.linspace(1.0, 300.0, 600)
-    labels = []
-    for i in range(0, len(record)):
-        vg_WC = calcVGfxn(psi_kPa, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i])
-        plt.plot(psi_kPa, vg_WC, label=str(nameArray[i]))
+    if AxisChoice == 'Y-axis':
     
-    plt.axvline(x=33.0, color='r', linestyle='dashed', label='Field capacity')
-    plt.xlim([0, 600.0])
-    plt.ylim([0, 1.0])
-    plt.title(title)
-    plt.ylabel('Water content')
-    plt.xlabel('- kPa')
-    plt.legend(ncol=2, fontsize=12, loc="best")
-    plt.savefig(outPath, transparent=False)
-    plt.close()
-    log.info('Plot created with lines for important thresholds')
-    '''
+        plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
+        plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
+        plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
+        plt.title(title)
+        plt.ylabel('Water content')
+        plt.xlabel('Pressure (' + str(pressureUnit) + ')')
+        plt.legend(ncol=2, fontsize=12, loc="best")
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created with water content on the y-axis')
 
+    elif AxisChoice == 'X-axis':
+        plt.axhline(y=fc_plot, color='g', linestyle='dashed', label='FC')
+        plt.axhline(y=sic_plot, color='m', linestyle='dashed', label='SIC')
+        plt.axhline(y=pwp_plot, color='r', linestyle='dashed', label='PWP')
+        plt.title(title)
+        plt.xlabel('Water content')
+        plt.ylabel('Pressure (' + str(pressureUnit) + ')')
+        plt.legend(ncol=2, fontsize=12, loc="best")
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created with water content on the x-axis')
+
+    else:
+        log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+        sys.exit()
     
 def calcPressuresVG(name, WC_residual, WC_sat, alpha_VG, n_VG, m_VG, vgPressures):
 
@@ -420,6 +448,14 @@ def plotMVG(outputFolder, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvG
     import matplotlib.pyplot as plt
     import numpy as np
 
+    # Check what axis was chosen
+    AxisChoice = common.getInputValue(outputFolder, 'Plot_axis')
+
+    # Define output folder for CSVs
+    outFolder = os.path.join(outputFolder, 'MVG')
+    if not os.path.exists(outFolder):
+        os.mkdir(outFolder)
+
     ################################
     ### Plot 0: individual plots ###
     ################################
@@ -431,21 +467,40 @@ def plotMVG(outputFolder, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvG
         title = 'Mualem-Van Genuchten plot for ' + str(nameArray[i])
 
         # h
-        x = np.linspace(0.0, 1500.0, 1500)
+        h = np.linspace(0.0, 1500.0, 1501)
 
         # K(h)
-        y = calcKhfxn(x, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
+        k_h = calcKhfxn(h, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
         
-        plt.plot(x, y, label=str(nameArray[i]))
-        plt.legend()
-        plt.yscale('log')
-        plt.xscale('log')
-        plt.title(title)
-        plt.xlabel('- kPa')
-        plt.ylabel('K(h)')
-        plt.savefig(outPath, transparent=False)
-        plt.close()
-        log.info('MVG plot created for soil ' + str(nameArray[i]))
+        common.writeWCCSV(outFolder, nameArray[i], h, k_h, 'Pressure_kPa', 'Ksat')
+
+        if AxisChoice == 'Y-axis':
+            plt.plot(h, k_h, label=str(nameArray[i]))
+            plt.legend()
+            plt.yscale('log')
+            plt.xscale('log')
+            plt.title(title)
+            plt.xlabel('- kPa')
+            plt.ylabel('K(h)')
+            plt.savefig(outPath, transparent=False)
+            plt.close()
+            log.info('MVG plot created for soil ' + str(nameArray[i]))
+
+        elif AxisChoice == 'X-axis':
+            plt.plot(k_h, h, label=str(nameArray[i]))
+            plt.legend()
+            plt.xscale('log')
+            plt.yscale('log')
+            plt.title(title)
+            plt.ylabel('- kPa')
+            plt.xlabel('K(h)')
+            plt.savefig(outPath, transparent=False)
+            plt.close()
+            log.info('MVG plot created for soil ' + str(nameArray[i]))
+
+        else:
+            log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+            sys.exit()
 
     #########################################
     ### Plot 1: one plot with all records ###
@@ -459,19 +514,45 @@ def plotMVG(outputFolder, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvG
     labels = []
     for i in range(0, len(nameArray)):
         y = calcKhfxn(x, K_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], l_MvGArray[i])
-        plt.plot(x, y, label=str(nameArray[i]))
+        
+        if AxisChoice == 'Y-axis':
+            plt.plot(x, y, label=str(nameArray[i]))
 
-    plt.yscale('log')
-    plt.xscale('log')
-    plt.title(title)
-    plt.ylabel('k(h)')
-    plt.xlabel('- kPa')
-    plt.legend(ncol=2, fontsize=12)
-    plt.xlim([1, 150000])
-    plt.savefig(outPath, transparent=False)
-    plt.close()
-    log.info('Plot created')
+        elif AxisChoice == 'X-axis':
+            plt.plot(y, x, label=str(nameArray[i]))
+        
+        else:
+            log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+            sys.exit()
 
+    if AxisChoice == 'Y-axis':
+        plt.yscale('log')
+        plt.xscale('log')
+        plt.title(title)
+        plt.ylabel('k(h)')
+        plt.xlabel('- kPa')
+        plt.legend(ncol=2, fontsize=12)
+        plt.xlim([1, 150000])
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created')
+
+    elif AxisChoice == 'X-axis':
+        plt.yscale('log')
+        plt.xscale('log')
+        plt.title(title)
+        plt.xlabel('k(h)')
+        plt.ylabel('- kPa')
+        plt.legend(ncol=2, fontsize=12)
+        plt.ylim([1, 150000])
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created')
+
+    else:
+        log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+        sys.exit()
+        
     #########################################
     ### Plot 2: one plot with all records ###
     #########################################
@@ -483,17 +564,42 @@ def plotMVG(outputFolder, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvG
     pressureVal = np.linspace(0.0, 1500.0, 1500)
     for i in range(0, len(nameArray)):
         thetaH, Ktheta = calcthetaHKfxn(pressureVal, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], K_satArray[i], l_MvGArray[i])          
-        plt.plot(thetaH, Ktheta, label=str(nameArray[i]))
+        
+        if AxisChoice == 'Y-axis':
+            plt.plot(thetaH, Ktheta, label=str(nameArray[i]))
 
-    plt.title(title)
-    plt.yscale('log')
-    plt.ylabel('k(theta)')
-    plt.xlabel('theta(h)')
-    plt.legend(ncol=2, fontsize=12)
-    plt.xlim([0, 1])
-    plt.savefig(outPath2, transparent=False)
-    plt.close()
-    log.info('Plot created')
+        elif AxisChoice == 'X-axis':
+            plt.plot(Ktheta, thetaH, label=str(nameArray[i]))
+
+        else:
+            log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+            sys.exit()
+
+    if AxisChoice == 'Y-axis':
+        plt.title(title)
+        plt.yscale('log')
+        plt.ylabel('k(theta)')
+        plt.xlabel('theta(h)')
+        plt.legend(ncol=2, fontsize=12)
+        plt.xlim([0, 1])
+        plt.savefig(outPath2, transparent=False)
+        plt.close()
+        log.info('Plot created')
+
+    elif AxisChoice == 'X-axis':
+        plt.title(title)
+        plt.xscale('log')
+        plt.xlabel('k(theta)')
+        plt.ylabel('theta(h)')
+        plt.legend(ncol=2, fontsize=12)
+        plt.ylim([0, 1])
+        plt.savefig(outPath2, transparent=False)
+        plt.close()
+        log.info('Plot created')
+
+    else:
+        log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+        sys.exit()
 
     #########################################
     ### Plot 3: one plot with all records ###
@@ -506,18 +612,45 @@ def plotMVG(outputFolder, K_satArray, alpha_VGArray, n_VGArray, m_VGArray, l_MvG
     pressureVal = np.linspace(1.0, 1500.0, 1500)
     for i in range(0, len(nameArray)):
         thetaH, Ktheta = calcthetaHKfxn(pressureVal, WC_residualArray[i], WC_satArray[i], alpha_VGArray[i], n_VGArray[i], m_VGArray[i], K_satArray[i], l_MvGArray[i])
-        plt.plot(pressureVal, Ktheta, label=str(nameArray[i]))
+        
+        if AxisChoice == 'Y-axis':
+            plt.plot(pressureVal, Ktheta, label=str(nameArray[i]))
 
-    plt.title(title)
-    plt.yscale('log')
-    plt.xscale('log')
-    plt.ylabel('k(theta)')
-    plt.xlabel('h (- cm)')
-    plt.legend(ncol=2, fontsize=12)
-    plt.xlim([1, 150000])
-    plt.savefig(outPath3, transparent=False)
-    plt.close()
-    log.info('Plot created')
+        elif AxisChoice == 'X-axis':
+            plt.plot(Ktheta, pressureVal, label=str(nameArray[i]))
+
+        else:
+            log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+            sys.exit()
+
+    if AxisChoice == 'Y-axis':
+        plt.title(title)
+        plt.yscale('log')
+        plt.xscale('log')
+        plt.ylabel('k(theta)')
+        plt.xlabel('h (- cm)')
+        plt.legend(ncol=2, fontsize=12)
+        plt.xlim([1, 150000])
+        plt.savefig(outPath3, transparent=False)
+        plt.close()
+        log.info('Plot created')
+
+    elif AxisChoice == 'X-axis':
+        plt.title(title)
+        plt.yscale('log')
+        plt.xscale('log')
+        plt.xlabel('k(theta)')
+        plt.ylabel('h (- cm)')
+        plt.legend(ncol=2, fontsize=12)
+        plt.ylim([1, 150000])
+        plt.savefig(outPath3, transparent=False)
+        plt.close()
+        log.info('Plot created')
+
+    else:
+        log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+        sys.exit()
+
 
 def calcPressuresMVG(name, K_sat, alpha_VG, n_VG, m_VG, l_MvG, vgPressures):
 

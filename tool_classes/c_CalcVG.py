@@ -186,7 +186,19 @@ class calcVG_PTFs(object):
                              u'm']
         params.append(param)
 
-        # 12 Calculate_MVG
+        # 12 Plot_axis
+        param = arcpy.Parameter()
+        param.name = u'Plot_axis'
+        param.displayName = u'Create water content and pressure plots with water content on the:'
+        param.parameterType = 'Required'
+        param.direction = 'Input'
+        param.datatype = u'String'
+        param.value = u'Y-axis'
+        param.filter.list = [u'Y-axis',
+                             u'X-axis']
+        params.append(param)
+
+        # 13 Calculate_MVG
         param = arcpy.Parameter()
         param.name = u'Calculate_MVG'
         param.displayName = u'Estimate unsaturated hydraulic conductivity and generate hydraulic conductivity curve using PTFs for Mualem van Genuchten model'
@@ -196,7 +208,7 @@ class calcVG_PTFs(object):
         param.value = u'False'
         params.append(param)
 
-        # 13 Output_Layer_SoilParam
+        # 14 Output_Layer_SoilParam
         param = arcpy.Parameter()
         param.name = u'Output_Layer_SoilParam'
         param.displayName = u'Soil'

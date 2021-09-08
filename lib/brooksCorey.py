@@ -78,10 +78,10 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
     # Check what unit the user wants to output
     PTFUnit = common.getInputValue(outputFolder, 'Pressure_units_plot')
 
-    # Check for any soils that we were not able to calculate BC parameters for
-    # lambdaArray[i] == -9999
-    # hbArray[i] == -9999
-    
+    # Check what axis was chosen
+    AxisChoice = common.getInputValue(outputFolder, 'Plot_axis')
+
+    # Check for any soils that we were not able to calculate BC parameters for    
     errors = []
     for i in range(0, len(lambdaArray)):
         if lambdaArray[i] == -9999:
@@ -110,7 +110,7 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
         # Calculate WC over that pressure vector
         bc_WC = calcBrooksCoreyFXN(psi_kPa, hbArray[i], WC_resArray[i], WC_satArray[i], lambdaArray[i])
         
-        common.writeWCCSV(outFolder, nameArray[i], psi_kPa, bc_WC)
+        common.writeWCCSV(outFolder, nameArray[i], psi_kPa, bc_WC, 'Pressures_kPa', 'WaterContents')
 
         ## Figure out what to do about multipliers
         if PTFUnit == 'kPa':
@@ -140,18 +140,37 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
         # Convert psi_plot to negative for plotting
         psi_neg = -1.0 * psi_plot
 
-        plt.plot(psi_neg, bc_WC, label=str(nameArray[i]))        
-        plt.xscale('symlog')
-        plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
-        plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
-        plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
-        plt.legend(loc="best")
-        plt.title(title)
-        plt.xlabel('Pressure (' + str(pressureUnit) + ')')
-        plt.ylabel('Volumetric water content')
-        plt.savefig(outPath, transparent=False)
-        plt.close()
-        log.info('Plot created for soil ' + str(nameArray[i]))
+        if AxisChoice == 'Y-axis':
+            plt.plot(psi_neg, bc_WC, label=str(nameArray[i]))        
+            plt.xscale('symlog')
+            plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
+            plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
+            plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
+            plt.legend(loc="best")
+            plt.title(title)
+            plt.xlabel('Pressure (' + str(pressureUnit) + ')')
+            plt.ylabel('Volumetric water content')
+            plt.savefig(outPath, transparent=False)
+            plt.close()
+            log.info('Plot created for soil ' + str(nameArray[i]))
+
+        elif AxisChoice == 'X-axis':
+            plt.plot(bc_WC, psi_neg, label=str(nameArray[i]))        
+            plt.yscale('symlog')
+            plt.axhline(y=fc_plot, color='g', linestyle='dashed', label='FC')
+            plt.axhline(y=sic_plot, color='m', linestyle='dashed', label='SIC')
+            plt.axhline(y=pwp_plot, color='r', linestyle='dashed', label='PWP')
+            plt.legend(loc="best")
+            plt.title(title)
+            plt.ylabel('Pressure (' + str(pressureUnit) + ')')
+            plt.xlabel('Volumetric water content')
+            plt.savefig(outPath, transparent=False)
+            plt.close()
+            log.info('Plot created for soil ' + str(nameArray[i]))
+
+        else:
+            log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+            sys.exit()
 
     #########################
     ### Plot 1: all soils ###
@@ -185,14 +204,32 @@ def plotBrooksCorey(outputFolder, WC_resArray, WC_satArray, hbArray, lambdaArray
 
         plt.plot(psi_neg, bc_WC, label=str(nameArray[i]))
     
-    plt.xscale('symlog')
-    plt.title(title)
-    plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
-    plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
-    plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
-    plt.ylabel('Water content')
-    plt.xlabel('Pressure (' + str(pressureUnit) + ')')
-    plt.legend(ncol=2, fontsize=12, loc="best")
-    plt.savefig(outPath, transparent=False)
-    plt.close()
-    log.info('Plot created with water content on the y-axis')
+    if AxisChoice == 'Y-axis':
+        plt.xscale('symlog')
+        plt.title(title)
+        plt.axvline(x=fc_plot, color='g', linestyle='dashed', label='FC')
+        plt.axvline(x=sic_plot, color='m', linestyle='dashed', label='SIC')
+        plt.axvline(x=pwp_plot, color='r', linestyle='dashed', label='PWP')
+        plt.ylabel('Water content')
+        plt.xlabel('Pressure (' + str(pressureUnit) + ')')
+        plt.legend(ncol=2, fontsize=12, loc="best")
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created with water content on the y-axis')
+
+    elif AxisChoice == 'X-axis':
+        plt.yscale('symlog')
+        plt.title(title)
+        plt.axhline(y=fc_plot, color='g', linestyle='dashed', label='FC')
+        plt.axhline(y=sic_plot, color='m', linestyle='dashed', label='SIC')
+        plt.axhline(y=pwp_plot, color='r', linestyle='dashed', label='PWP')
+        plt.xlabel('Water content')
+        plt.ylabel('Pressure (' + str(pressureUnit) + ')')
+        plt.legend(ncol=2, fontsize=12, loc="best")
+        plt.savefig(outPath, transparent=False)
+        plt.close()
+        log.info('Plot created with water content on the y-axis')
+
+    else:
+        log.error('Invalid choice for axis plotting, please select Y-axis or X-axis')
+        sys.exit()

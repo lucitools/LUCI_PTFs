@@ -98,7 +98,7 @@ class CalcKsat(object):
         # 5 Carbon_content
         param = arcpy.Parameter()
         param.name = u'Carbon_content'
-        param.displayName = u'Carbon: Does your dataset contain organic carbon or organic matter?'
+        param.displayName = u'If the selected PTF requires organic carbon or organic matter, select which type is present in your dataset:'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
@@ -109,7 +109,7 @@ class CalcKsat(object):
         # 6 Conversion_factor
         param = arcpy.Parameter()
         param.name = u'Conversion_factor'
-        param.displayName = u'Carbon: enter a conversion factor'
+        param.displayName = u'If the selected PTF requires organic carbon or organic matter, enter the appropriate conversion factor to change OM or OC (or vice-versa):'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'Double'

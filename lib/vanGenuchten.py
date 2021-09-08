@@ -267,7 +267,7 @@ def plotVG(outputFolder, WC_residualArray,
 
     # Plot 3: pressure on the x-axis, WC on the y-axis
     outPath = os.path.join(outputFolder, 'plotVG_Pressure.png')
-    title = 'Van Genuchten plots of ' + str(len(nameArray)) + ' soils (log scale)'
+    title = 'Van Genuchten plots of ' + str(len(nameArray)) + ' soils'
 
     # Define pressure vector 
     psi_kPa = np.linspace(0.0, 1500.0, 1501)

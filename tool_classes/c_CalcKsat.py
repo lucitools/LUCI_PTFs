@@ -72,7 +72,7 @@ class CalcKsat(object):
         # 3 Input_folder
         param = arcpy.Parameter()
         param.name = u'Input_folder'
-        param.displayName = u'Input folder: results from calculation using point-PTF or vg-PTFs'
+        param.displayName = u'Input folder: results from calculation using point-PTF or vg-PTFs or bc-PTFs'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'Folder'
@@ -98,7 +98,7 @@ class CalcKsat(object):
         # 5 Carbon_content
         param = arcpy.Parameter()
         param.name = u'Carbon_content'
-        param.displayName = u'If the selected PTF requires organic carbon or organic matter, select which type is present in your dataset:'
+        param.displayName = u'If the selected PTF requires OC or OM, select which type is present in your dataset:'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
@@ -109,7 +109,7 @@ class CalcKsat(object):
         # 6 Conversion_factor
         param = arcpy.Parameter()
         param.name = u'Conversion_factor'
-        param.displayName = u'If the selected PTF requires organic carbon or organic matter, enter the appropriate conversion factor to change OM to OC (or vice-versa), default factors provided:'
+        param.displayName = u'If the selected PTF requires OC or OM, enter the appropriate conversion factor to change OM to OC (or vice-versa):'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'Double'

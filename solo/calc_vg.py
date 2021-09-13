@@ -24,7 +24,10 @@ def function(outputFolder, inputShp, VGOption, VGPressArray, MVGChoice, fcVal, s
         prefix = os.path.join(arcpy.env.scratchGDB, "soil_")
 
         # Set output filename
-        outputShp = os.path.join(outputFolder, "soil_vg.shp")
+        if MVGChoice == True:
+            outputShp = os.path.join(outputFolder, "soil_mvg.shp")
+        else:
+            outputShp = os.path.join(outputFolder, "soil_vg.shp")
 
         # Copy the input shapefile to the output folder
         arcpy.CopyFeatures_management(inputShp, outputShp)

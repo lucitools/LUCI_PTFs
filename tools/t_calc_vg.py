@@ -106,7 +106,12 @@ def function(params):
                          carbContent, carbonConFactor)
 
         # Loading shapefile automatically
-        soilParamOut = os.path.join(outputFolder, "soil_vg.shp")
+        if MVGChoice == True:
+            soilParamOut = os.path.join(outputFolder, "soil_mvg.shp")
+        else:
+            soilParamOut = os.path.join(outputFolder, "soil_vg.shp")
+        
+
         arcpy.SetParameter(14, soilParamOut)
 
         log.info("van Genuchten operations completed successfully")

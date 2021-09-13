@@ -155,7 +155,7 @@ class calcVG_PTFs(object):
         # 9 Carbon_content
         param = arcpy.Parameter()
         param.name = u'Carbon_content'
-        param.displayName = u'If the selected PTF requires organic carbon or organic matter, select which type is present in your dataset:'
+        param.displayName = u'If the selected PTF requires OC or OM, select which type is present in your dataset:'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'
@@ -166,7 +166,7 @@ class calcVG_PTFs(object):
         # 10 Conversion_factor
         param = arcpy.Parameter()
         param.name = u'Conversion_factor'
-        param.displayName = u'If the selected PTF requires organic carbon or organic matter, enter the appropriate conversion factor to change OM to OC (or vice-versa), default factors provided:'
+        param.displayName = u'If the selected PTF requires OC or OM, enter the appropriate conversion factor to change OM to OC (or vice-versa):'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'Double'

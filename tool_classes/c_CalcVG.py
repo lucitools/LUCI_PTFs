@@ -189,7 +189,7 @@ class calcVG_PTFs(object):
         # 12 Plot_axis
         param = arcpy.Parameter()
         param.name = u'Plot_axis'
-        param.displayName = u'Create water content and pressure plots with water content on the:'
+        param.displayName = u'Create water content and pressure plots with water content or hydraulic conductivity on the:'
         param.parameterType = 'Required'
         param.direction = 'Input'
         param.datatype = u'String'

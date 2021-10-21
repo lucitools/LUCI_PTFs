@@ -337,6 +337,7 @@ def SaxtonRawls_2006_BC(outputShp, PTFOption, carbonConFactor, carbContent):
     WC_satArray = []
     lambda_BCArray = []
     hb_BCArray = []
+    K_satArray = []
 
     # Get OID field
     OIDField = common.getOIDField(outputShp)
@@ -418,9 +419,28 @@ def SaxtonRawls_2006_BC(outputShp, PTFOption, carbonConFactor, carbContent):
             hbt_BC = - (0.2167 * sandPerc[x]) - (0.2793 * clayPerc[x])  -  (81.97 * WC_sat_33kPa) + (0.7112 * sandPerc[x] * WC_sat_33kPa)  + (0.0829 * clayPerc[x]  * WC_sat_33kPa) + (0.001405 * sandPerc[x] * clayPerc[x])   + 27.16
             hb_BC = hbt_BC + (0.02 * hbt_BC  ** 2)  - (0.113 * hbt_BC) - 0.7
 
+        # If there is a valid lambda value
+        if lambda_BC != -9999:
+            K_sat = 1930.0 * ((WC_sat - WC_33kPa)**(3 - lambda_BC)) 
+        else:
+            # If not valid, set K_sat to -9999
+            K_sat = -9999
+
         WC_resArray.append(WC_residual)
         WC_satArray.append(WC_sat)
         lambda_BCArray.append(lambda_BC)
         hb_BCArray.append(hb_BC)
+        K_satArray.append(K_sat)
+
+    # Write K_sat to the output shapefile
+    arcpy.AddField_management(outputShp, "K_sat", "DOUBLE", 10, 6)
+
+    recordNum = 0
+    with arcpy.da.UpdateCursor(outputShp, "K_sat") as cursor:
+        for row in cursor:
+            row[0] = K_satArray[recordNum]
+
+            cursor.updateRow(row)
+            recordNum += 1
 
     return warningArray, WC_resArray, WC_satArray, lambda_BCArray, hb_BCArray
